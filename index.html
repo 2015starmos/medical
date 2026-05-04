@@ -582,11 +582,18 @@
     </div>
   </div>
 
-  <div class="modal" id="imgModal" onclick="closeImgModal()">
-    <div class="modal-content">
-      <img src="" id="showBigImg" class="modal-img">
+<div class="modal" id="imgModal" onclick="closeImgModal()">
+  <div class="modal-content" onclick="event.stopPropagation()" style="position:relative;">
+    <img src="" id="showBigImg" class="modal-img">
+    
+    <button onclick="prevImg()" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);color:#fff;border:none;padding:10px;border-radius:50%;font-size:20px;">❮</button>
+    <button onclick="nextImg()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);color:#fff;border:none;padding:10px;border-radius:50%;font-size:20px;">❯</button>
+    
+    <div style="position:absolute;bottom:15px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#fff;padding:5px 15px;border-radius:20px;font-size:13px;">
+      <span id="imgPageNum">1 / 1</span>
     </div>
   </div>
+</div>
 
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -628,6 +635,10 @@ window.getDownloadURL = getDownloadURL;
     let examFiles = [];
     let treatFiles = [];
     let weightChart = null;
+    let editRecordId = null;
+    let nowImgList = [];
+    let nowImgIndex = 0;
+
 
     function switchTab(id, btn) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -764,14 +775,17 @@ window.getDownloadURL = getDownloadURL;
     }
 
     function bindCat(id, name) {
-      currentCatId = id;
-      document.getElementById('bindCatInfo').innerHTML = `
-        <div style="background:#d4edda;padding:10px;border-radius:4px;color:var(--success);font-weight:bold;">
-          ✅ 已成功綁定：${name} (ID: ${id})
-          <button class="btn btn-outline" style="margin-left:10px;" onclick="unbindCat()">解除綁定</button>
-        </div>
-      `;
-    }
+  currentCatId = id;
+  document.getElementById('bindCatInfo').innerHTML = `
+    <div style="background:#d4edda;padding:10px;border-radius:4px;color:var(--success);font-weight:bold;">
+      ✅ 已成功綁定：${name} (ID: ${id})
+      <button class="btn btn-outline" style="margin-left:10px;" onclick="unbindCat()">解除綁定</button>
+    </div>
+  `;
+  
+  // 自動跳轉到建立病歷頁面（修復重點）
+  switchTab('record', document.querySelectorAll('.tab-btn')[1]);
+}
 
     function unbindCat(){
       currentCatId = null;
@@ -857,37 +871,51 @@ window.getDownloadURL = getDownloadURL;
       showDrugList();
     }
 
-    function previewExamFiles() {
-      const files = document.getElementById('uploadExamFile').files;
-      examFiles = Array.from(files);
-      const preview = document.getElementById('examPhotoPreview');
-      preview.innerHTML = '';
+function previewExamFiles() {
+  const files = document.getElementById('uploadExamFile').files;
+  examFiles = examFiles.concat(Array.from(files));
+  
+  const preview = document.getElementById('examPhotoPreview');
+  preview.innerHTML = '';
 
-      files.forEach(file => {
-        const url = URL.createObjectURL(file);
-        preview.innerHTML += `
-          <div class="photo-item">
-            <img src="${url}" onclick="openImgModal('${url}')" title="${file.name}">
-          </div>
-        `;
-      });
-    }
+  examFiles.forEach((file, index) => {
+    const url = URL.createObjectURL(file);
+    preview.innerHTML += `
+      <div class="photo-item" style="position:relative; width:120px; height:120px;">
+        <img src="${url}" onclick="openImgModal('${url}')" style="width:100%;height:100%;object-fit:cover;">
+        <button onclick="deleteExamPhoto(${index})" style="
+          position:absolute; top:2px; right:2px; 
+          background:red; color:white; border:none; 
+          border-radius:50%; width:20px; height:20px;
+          cursor:pointer; font-size:12px;
+        ">✕</button>
+      </div>
+    `;
+  });
+}
 
-    function previewTreatFiles() {
-      const files = document.getElementById('uploadTreatFile').files;
-      treatFiles = Array.from(files);
-      const preview = document.getElementById('treatPhotoPreview');
-      preview.innerHTML = '';
+function previewTreatFiles() {
+  const files = document.getElementById('uploadTreatFile').files;
+  treatFiles = treatFiles.concat(Array.from(files));
+  
+  const preview = document.getElementById('treatPhotoPreview');
+  preview.innerHTML = '';
 
-      files.forEach(file => {
-        const url = URL.createObjectURL(file);
-        preview.innerHTML += `
-          <div class="photo-item">
-            <img src="${url}" onclick="openImgModal('${url}')" title="${file.name}">
-          </div>
-        `;
-      });
-    }
+  treatFiles.forEach((file, index) => {
+    const url = URL.createObjectURL(file);
+    preview.innerHTML += `
+      <div class="photo-item" style="position:relative; width:120px; height:120px;">
+        <img src="${url}" onclick="openImgModal('${url}')" style="width:100%;height:100%;object-fit:cover;">
+        <button onclick="deleteTreatPhoto(${index})" style="
+          position:absolute; top:2px; right:2px; 
+          background:red; color:white; border:none; 
+          border-radius:50%; width:20px; height:20px;
+          cursor:pointer; font-size:12px;
+        ">✕</button>
+      </div>
+    `;
+  });
+}
 
 async function saveDraftRecord() {
   if (!currentCatId) {
@@ -936,7 +964,7 @@ async function saveFullRecord() {
     return;
   }
 
-  if (!confirm('確定要儲存這筆正式病歷嗎？')) return;
+  if (!confirm('確定儲存病歷？編輯模式會直接覆蓋舊資料')) return;
 
   const data = {
     catId: currentCatId,
@@ -946,14 +974,23 @@ async function saveFullRecord() {
     weight: document.getElementById('nowWeight').value,
     content: content,
     drugs: drugList,
-    createTime: new Date().toISOString(),
     updateTime: new Date().toISOString()
   };
 
   try {
-    await addDoc(collection(db, 'records'), data);
-    alert('✅ 病歷儲存成功！');
+    // 有編輯ID → 更新舊病歷
+    if(editRecordId){
+      await updateDoc(doc(db, 'records', editRecordId), data);
+      alert('✅ 病歷已覆蓋更新完成！');
+      editRecordId = null; // 清空編輯狀態
+    }else{
+      // 一般新增
+      data.createTime = new Date().toISOString();
+      await addDoc(collection(db, 'records'), data);
+      alert('✅ 新病歷儲存成功！');
+    }
     
+    // 清空表單
     drugList = [];
     showDrugList();
     document.getElementById('visitContent').value = '';
@@ -979,9 +1016,13 @@ async function editRecord(id) {
   if(!snap.exists()) return alert('查無病歷資料');
   const data = snap.data();
 
+  // 記住目前編輯的病歷ID
+  editRecordId = id;
+  // 綁定貓咪 + 切換分頁
   switchTab('record', document.querySelectorAll('.tab-btn')[1]);
-  bindCat(data.catId, '');
+  bindCat(data.catId, data.catName || '');
 
+  // 載入舊資料到表單
   document.getElementById('visitDate').value = data.visitDate || '';
   document.getElementById('reVisitDate').value = data.reVisitDate || '';
   document.getElementById('surgeryDate').value = data.surgeryDate || '';
@@ -990,7 +1031,7 @@ async function editRecord(id) {
 
   drugList = data.drugs || [];
   showDrugList();
-  alert('✅ 病歷已載入，可直接編輯');
+  alert('✅ 舊病歷已載入，修改後儲存會直接覆蓋舊資料');
 }
 
 async function deleteRecord(id) {
@@ -1064,20 +1105,32 @@ async function viewRecordDetail(id){
   const snap = await getDoc(docRef);
   if(!snap.exists()) return alert('查無病歷');
   const data = snap.data();
+  
   let content = `
-    就診日期：${data.visitDate}
-    回診日期：${data.reVisitDate || '無'}
-    體重：${data.weight || '未填寫'}
-    症狀：${data.content || '無'}
-    
-    用藥紀錄：
-  `;
-  data.drugs.forEach((d,i)=>{
-    content += `\n${i+1}. ${d.name} - ${d.dose}`;
-  });
-  alert(content);
-}
+就診日期：${data.visitDate}
+回診日期：${data.reVisitDate || '無'}
+體重：${data.weight || '未填寫'}
+症狀：${data.content || '無'}
 
+用藥紀錄：
+`;
+  if(data.drugs && data.drugs.length>0){
+    data.drugs.forEach((d,i)=>{
+      content += `\n${i+1}. ${d.name} - ${d.dose} ${d.times||''}`;
+    });
+  }else{
+    content += '\n無用藥紀錄';
+  }
+
+  alert(content);
+
+  // 照片輪播
+  nowImgList = data.imgList || [];
+  nowImgIndex = 0;
+  if(nowImgList.length > 0){
+    openImgModal(nowImgList[0]);
+  }
+}
 async function loadWeightChart() {
   const kw = document.getElementById('searchWeightCat').value.toLowerCase();
   if (!kw) {
@@ -1288,6 +1341,35 @@ window.onload = function() {
   showDrugList();
   loadFavoriteList();
 };
+
+// 上一張圖片
+function prevImg(){
+  if(nowImgList.length === 0) return;
+  nowImgIndex --;
+  if(nowImgIndex < 0) nowImgIndex = nowImgList.length - 1;
+  document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
+  document.getElementById('imgPageNum').innerText = `${nowImgIndex+1} / ${nowImgList.length}`;
+}
+
+// 下一張圖片
+function nextImg(){
+  if(nowImgList.length === 0) return;
+  nowImgIndex ++;
+  if(nowImgIndex >= nowImgList.length) nowImgIndex = 0;
+  document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
+  document.getElementById('imgPageNum').innerText = `${nowImgIndex+1} / ${nowImgList.length}`;
+}
+// 刪除單張檢驗照片
+function deleteExamPhoto(index) {
+  examFiles.splice(index, 1);
+  previewExamFiles();
+}
+
+// 刪除單張治療照片
+function deleteTreatPhoto(index) {
+  treatFiles.splice(index, 1);
+  previewTreatFiles();
+}
   </script>
 </body>
 </html>
