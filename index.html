@@ -166,7 +166,7 @@
     </div>
     <div class="nav-menu">
       <a href="#" class="active">🖥️系統首頁</a>
-      <a href="javascript:switchTab('admin', document.querySelectorAll('.tab-btn')[5])">🔧 管理後台</a>
+      <button class="tab-btn" id="adminTabBtn" onclick="switchTab('admin',this)" style="display:none;">管理</button>
     </div>
   </div>
 
@@ -319,7 +319,6 @@
         </div>
       </div>
 
-      <!-- 👇 👇 這裡是我幫你加好的 驅蟲紀錄 欄位 👇 👇 -->
       <div style="margin-top:12px; padding:10px; border-left:4px solid #4CAF50; background:#f9f9f9; border-radius:4px;">
         <h4 style="margin:0 0 8px 0; color:#2c6e2f;">💊 驅蟲紀錄</h4>
         <div class="form-grid">
@@ -580,7 +579,7 @@
   </div>
 </div>
 
-  <script type="module">
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, where, query, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
@@ -614,165 +613,165 @@ window.uploadBytes = uploadBytes;
 window.getDownloadURL = getDownloadURL;
 </script>
 
-  <script>
-    let currentCatId = null;
-    let drugList = [];
-    let examFiles = [];
-    let treatFiles = [];
-    let weightChart = null;
-    let editRecordId = null;
-    let nowImgList = [];
-    let nowImgIndex = 0;
-    let remindList = [];
+<script>
+let currentCatId = null;
+let drugList = [];
+let examFiles = [];
+let treatFiles = [];
+let weightChart = null;
+let editRecordId = null;
+let nowImgList = [];
+let nowImgIndex = 0;
+let remindList = [];
 
-    function switchTab(id, btn) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      btn.classList.add('active');
+function switchTab(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function addSymptom(el) {
+  el.classList.toggle('active');
+  let val = el.innerText;
+  let content = document.getElementById('visitContent');
+  if (el.classList.contains('active')) {
+    if(!content.value.includes(val)){
+      content.value += val + "、";
     }
+  } else {
+    content.value = content.value.replace(val + "、", "");
+  }
+}
 
-    function addSymptom(el) {
-      el.classList.toggle('active');
-      let val = el.innerText;
-      let content = document.getElementById('visitContent');
-      if (el.classList.contains('active')) {
-        if(!content.value.includes(val)){
-          content.value += val + "、";
-        }
-      } else {
-        content.value = content.value.replace(val + "、", "");
-      }
+function openImgModal(src) {
+  document.getElementById('showBigImg').src = src;
+  document.getElementById('imgModal').style.display = 'flex';
+}
+function closeImgModal() {
+  document.getElementById('imgModal').style.display = 'none';
+}
+
+function clearCatForm() {
+  document.getElementById('editCatId').value = '';
+  document.getElementById('catName').value = '';
+  document.getElementById('chipId').value = '';
+  document.getElementById('catBreed').value = '';
+  document.getElementById('catBirth').value = '';
+  document.getElementById('ownerName').value = '';
+  document.getElementById('ownerPhone').value = '';
+  document.getElementById('ownerPhone2').value = '';
+  document.getElementById('ownerId').value = '';
+  document.getElementById('ownerAddr').value = '';
+  document.getElementById('catNote').value = '';
+}
+
+async function saveCatData() {
+  const id = document.getElementById('editCatId').value;
+  const data = {
+    name: document.getElementById('catName').value,
+    chip: document.getElementById('chipId').value,
+    gender: document.getElementById('catGender').value,
+    breed: document.getElementById('catBreed').value,
+    birth: document.getElementById('catBirth').value,
+    neuter: document.getElementById('catNeuter').value,
+    owner: document.getElementById('ownerName').value,
+    phone: document.getElementById('ownerPhone').value,
+    phone2: document.getElementById('ownerPhone2').value,
+    ownerId: document.getElementById('ownerId').value,
+    addr: document.getElementById('ownerAddr').value,
+    note: document.getElementById('catNote').value,
+    createTime: new Date().toISOString()
+  };
+
+  if (!data.name) return alert('請輸入動物姓名');
+  if (!data.owner) return alert('請輸入飼主姓名');
+  if (!data.phone) return alert('請輸入飼主聯繫電話');
+
+  try {
+    if (id) {
+      await updateDoc(doc(db, 'cats', id), data);
+      alert('✅ 動物資料編輯完成');
+    } else {
+      await addDoc(collection(db, 'cats'), data);
+      alert('✅ 動物資料新增成功');
     }
+    clearCatForm();
+    searchCatAll();
+  } catch (e) {
+    alert('❌ 儲存失敗：' + e.message);
+  }
+}
 
-    function openImgModal(src) {
-      document.getElementById('showBigImg').src = src;
-      document.getElementById('imgModal').style.display = 'flex';
-    }
-    function closeImgModal() {
-      document.getElementById('imgModal').style.display = 'none';
-    }
+async function searchCatAll() {
+  const kw = document.getElementById('searchCatInput').value.toLowerCase();
+  const snap = await getDocs(collection(db, 'cats'));
+  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const res = list.filter(i =>
+    (i.name && i.name.toLowerCase().includes(kw)) ||
+    (i.owner && i.owner.toLowerCase().includes(kw)) ||
+    (i.phone && i.phone.includes(kw)) ||
+    (i.chip && i.chip.includes(kw)) ||
+    (i.ownerId && i.ownerId.includes(kw))
+  );
 
-    function clearCatForm() {
-      document.getElementById('editCatId').value = '';
-      document.getElementById('catName').value = '';
-      document.getElementById('chipId').value = '';
-      document.getElementById('catBreed').value = '';
-      document.getElementById('catBirth').value = '';
-      document.getElementById('ownerName').value = '';
-      document.getElementById('ownerPhone').value = '';
-      document.getElementById('ownerPhone2').value = '';
-      document.getElementById('ownerId').value = '';
-      document.getElementById('ownerAddr').value = '';
-      document.getElementById('catNote').value = '';
-    }
+  const tbody = document.getElementById('catTableBody');
+  if (res.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">無符合條件的動物資料</td></tr>';
+    return;
+  }
 
-    async function saveCatData() {
-      const id = document.getElementById('editCatId').value;
-      const data = {
-        name: document.getElementById('catName').value,
-        chip: document.getElementById('chipId').value,
-        gender: document.getElementById('catGender').value,
-        breed: document.getElementById('catBreed').value,
-        birth: document.getElementById('catBirth').value,
-        neuter: document.getElementById('catNeuter').value,
-        owner: document.getElementById('ownerName').value,
-        phone: document.getElementById('ownerPhone').value,
-        phone2: document.getElementById('ownerPhone2').value,
-        ownerId: document.getElementById('ownerId').value,
-        addr: document.getElementById('ownerAddr').value,
-        note: document.getElementById('catNote').value,
-        createTime: new Date().toISOString()
-      };
+  tbody.innerHTML = res.map(i => `
+    <tr>
+      <td>${i.name || '-'}</td>
+      <td>${i.chip || '-'}</td>
+      <td>${i.gender}/${i.neuter}</td>
+      <td>${i.owner || '-'}</td>
+      <td>${i.phone || '-'}</td>
+      <td>
+        <button class="btn btn-outline" onclick="editCat('${i.id}')">✏️ 編輯</button>
+        <button class="btn btn-primary" onclick="bindCat('${i.id}','${i.name}')">📝 綁定</button>
+      </td>
+    </tr>
+  `).join('');
+}
 
-      if (!data.name) return alert('請輸入動物姓名');
-      if (!data.owner) return alert('請輸入飼主姓名');
-      if (!data.phone) return alert('請輸入飼主聯繫電話');
+async function editCat(id) {
+  const docRef = doc(db, 'cats', id);
+  const snap = await getDoc(docRef);
+  if(!snap.exists()) return alert('查無此資料');
+  const d = snap.data();
 
-      try {
-        if (id) {
-          await updateDoc(doc(db, 'cats', id), data);
-          alert('✅ 動物資料編輯完成');
-        } else {
-          await addDoc(collection(db, 'cats'), data);
-          alert('✅ 動物資料新增成功');
-        }
-        clearCatForm();
-        searchCatAll();
-      } catch (e) {
-        alert('❌ 儲存失敗：' + e.message);
-      }
-    }
+  document.getElementById('editCatId').value = id;
+  document.getElementById('catName').value = d.name || '';
+  document.getElementById('chipId').value = d.chip || '';
+  document.getElementById('catGender').value = d.gender || '公';
+  document.getElementById('catBreed').value = d.breed || '';
+  document.getElementById('catBirth').value = d.birth || '';
+  document.getElementById('catNeuter').value = d.neuter || '未結紮';
+  document.getElementById('ownerName').value = d.owner || '';
+  document.getElementById('ownerPhone').value = d.phone || '';
+  document.getElementById('ownerPhone2').value = d.phone2 || '';
+  document.getElementById('ownerId').value = d.ownerId || '';
+  document.getElementById('ownerAddr').value = d.addr || '';
+  document.getElementById('catNote').value = d.note || '';
+}
 
-    async function searchCatAll() {
-      const kw = document.getElementById('searchCatInput').value.toLowerCase();
-      const snap = await getDocs(collection(db, 'cats'));
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const res = list.filter(i =>
-        (i.name && i.name.toLowerCase().includes(kw)) ||
-        (i.owner && i.owner.toLowerCase().includes(kw)) ||
-        (i.phone && i.phone.includes(kw)) ||
-        (i.chip && i.chip.includes(kw)) ||
-        (i.ownerId && i.ownerId.includes(kw))
-      );
+function bindCat(id, name) {
+  currentCatId = id;
+  document.getElementById('bindCatInfo').innerHTML = `
+    <div style="background:#d4edda;padding:10px;border-radius:4px;color:var(--success);font-weight:bold;">
+      ✅ 已成功綁定：${name} (ID: ${id})
+      <button class="btn btn-outline" style="margin-left:10px;" onclick="unbindCat()">解除綁定</button>
+    </div>
+  `;
+  switchTab('record', document.querySelectorAll('.tab-btn')[1]);
+}
 
-      const tbody = document.getElementById('catTableBody');
-      if (res.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">無符合條件的動物資料</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = res.map(i => `
-        <tr>
-          <td>${i.name || '-'}</td>
-          <td>${i.chip || '-'}</td>
-          <td>${i.gender}/${i.neuter}</td>
-          <td>${i.owner || '-'}</td>
-          <td>${i.phone || '-'}</td>
-          <td>
-            <button class="btn btn-outline" onclick="editCat('${i.id}')">✏️ 編輯</button>
-            <button class="btn btn-primary" onclick="bindCat('${i.id}','${i.name}')">📝 綁定</button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function editCat(id) {
-      const docRef = doc(db, 'cats', id);
-      const snap = await getDoc(docRef);
-      if(!snap.exists()) return alert('查無此資料');
-      const d = snap.data();
-
-      document.getElementById('editCatId').value = id;
-      document.getElementById('catName').value = d.name || '';
-      document.getElementById('chipId').value = d.chip || '';
-      document.getElementById('catGender').value = d.gender || '公';
-      document.getElementById('catBreed').value = d.breed || '';
-      document.getElementById('catBirth').value = d.birth || '';
-      document.getElementById('catNeuter').value = d.neuter || '未結紮';
-      document.getElementById('ownerName').value = d.owner || '';
-      document.getElementById('ownerPhone').value = d.phone || '';
-      document.getElementById('ownerPhone2').value = d.phone2 || '';
-      document.getElementById('ownerId').value = d.ownerId || '';
-      document.getElementById('ownerAddr').value = d.addr || '';
-      document.getElementById('catNote').value = d.note || '';
-    }
-
-    function bindCat(id, name) {
-      currentCatId = id;
-      document.getElementById('bindCatInfo').innerHTML = `
-        <div style="background:#d4edda;padding:10px;border-radius:4px;color:var(--success);font-weight:bold;">
-          ✅ 已成功綁定：${name} (ID: ${id})
-          <button class="btn btn-outline" style="margin-left:10px;" onclick="unbindCat()">解除綁定</button>
-        </div>
-      `;
-      switchTab('record', document.querySelectorAll('.tab-btn')[1]);
-    }
-
-    function unbindCat(){
-      currentCatId = null;
-      document.getElementById('bindCatInfo').innerHTML = '尚未綁定動物，請先搜尋並選擇欲建立病歷的動物';
-    }
+function unbindCat(){
+  currentCatId = null;
+  document.getElementById('bindCatInfo').innerHTML = '尚未綁定動物，請先搜尋並選擇欲建立病歷的動物';
+}
 
 async function searchCatForRecord() {
   const kw = document.getElementById('searchRecordCat').value.toLowerCase().trim();
@@ -780,7 +779,6 @@ async function searchCatForRecord() {
   const snap = await getDocs(collection(db, 'cats'));
   const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   
-  // 全方位雙向模糊搜尋
   const res = list.filter(i => {
     return (
       (i.name && i.name.toLowerCase().includes(kw)) ||
@@ -818,53 +816,53 @@ async function searchCatForRecord() {
   document.getElementById('bindCatInfo').innerHTML = html;
 }
 
-    function addDrugItem() {
-      const item = {
-        name: document.getElementById('drugName').value,
-        dose: document.getElementById('drugDose').value,
-        times: document.getElementById('drugTimes').value,
-        start: document.getElementById('drugStartDate').value,
-        end: document.getElementById('drugEndDate').value,
-        remark: document.getElementById('drugRemark').value
-      };
+function addDrugItem() {
+  const item = {
+    name: document.getElementById('drugName').value,
+    dose: document.getElementById('drugDose').value,
+    times: document.getElementById('drugTimes').value,
+    start: document.getElementById('drugStartDate').value,
+    end: document.getElementById('drugEndDate').value,
+    remark: document.getElementById('drugRemark').value
+  };
 
-      if (!item.name) return alert('請輸入藥品名稱');
-      if (!item.dose) return alert('請輸入用藥劑量');
+  if (!item.name) return alert('請輸入藥品名稱');
+  if (!item.dose) return alert('請輸入用藥劑量');
 
-      drugList.push(item);
-      showDrugList();
+  drugList.push(item);
+  showDrugList();
 
-      document.getElementById('drugName').value = '';
-      document.getElementById('drugDose').value = '';
-      document.getElementById('drugTimes').value = '';
-      document.getElementById('drugStartDate').value = '';
-      document.getElementById('drugEndDate').value = '';
-      document.getElementById('drugRemark').value = '';
-    }
+  document.getElementById('drugName').value = '';
+  document.getElementById('drugDose').value = '';
+  document.getElementById('drugTimes').value = '';
+  document.getElementById('drugStartDate').value = '';
+  document.getElementById('drugEndDate').value = '';
+  document.getElementById('drugRemark').value = '';
+}
 
-    function showDrugList() {
-      const tbody = document.getElementById('drugTableBody');
-      if (drugList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">尚未新增用藥紀錄</td></tr>';
-        return;
-      }
+function showDrugList() {
+  const tbody = document.getElementById('drugTableBody');
+  if (drugList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">尚未新增用藥紀錄</td></tr>';
+    return;
+  }
 
-      tbody.innerHTML = drugList.map((item, index) => `
-        <tr>
-          <td>${item.name}</td>
-          <td>${item.dose}</td>
-          <td>${item.times || '-'}</td>
-          <td>${item.start || '-'} ~ ${item.end || '-'}</td>
-          <td>${item.remark || '-'}</td>
-          <td><button class="btn btn-danger" onclick="deleteDrug(${index})">🗑️ 刪除</button></td>
-        </tr>
-      `).join('');
-    }
+  tbody.innerHTML = drugList.map((item, index) => `
+    <tr>
+      <td>${item.name}</td>
+      <td>${item.dose}</td>
+      <td>${item.times || '-'}</td>
+      <td>${item.start || '-'} ~ ${item.end || '-'}</td>
+      <td>${item.remark || '-'}</td>
+      <td><button class="btn btn-danger" onclick="deleteDrug(${index})">🗑️ 刪除</button></td>
+    </tr>
+  `).join('');
+}
 
-    function deleteDrug(index) {
-      drugList.splice(index, 1);
-      showDrugList();
-    }
+function deleteDrug(index) {
+  drugList.splice(index, 1);
+  showDrugList();
+}
 
 function previewExamFiles() {
   const files = document.getElementById('uploadExamFile').files;
@@ -936,21 +934,21 @@ async function saveDraftRecord() {
   }
   if (!confirm('確定要儲存草稿嗎？')) return;
 
-const data = {
-  catId: currentCatId,
-  visitDate: document.getElementById('visitDate').value || '',
-  reVisitDate: document.getElementById('reVisitDate').value || '',
-  surgeryDate: document.getElementById('surgeryDate').value || '',
-  weight: document.getElementById('nowWeight').value || '',
-  content: document.getElementById('visitContent').value || '',
-  drugs: drugList,
-  isDraft: true,
-  createTime: new Date().toISOString(),
-  updateTime: new Date().toISOString(),
-  dewormMedicine: document.getElementById('dewormMedicine').value || '',
-  dewormTime: document.getElementById('dewormTime').value || '',
-  dewormRemindDate: document.getElementById('dewormRemindDate').value || ''
-};
+  const data = {
+    catId: currentCatId,
+    visitDate: document.getElementById('visitDate').value || '',
+    reVisitDate: document.getElementById('reVisitDate').value || '',
+    surgeryDate: document.getElementById('surgeryDate').value || '',
+    weight: document.getElementById('nowWeight').value || '',
+    content: document.getElementById('visitContent').value || '',
+    drugs: drugList,
+    isDraft: true,
+    createTime: new Date().toISOString(),
+    updateTime: new Date().toISOString(),
+    dewormMedicine: document.getElementById('dewormMedicine').value || '',
+    dewormTime: document.getElementById('dewormTime').value || '',
+    dewormRemindDate: document.getElementById('dewormRemindDate').value || ''
+  };
 
   try {
     await addDoc(collection(db, 'records'), data);
@@ -1056,7 +1054,6 @@ async function editRecord(id) {
   drugList = data.drugs || [];
   showDrugList();
 
-  // 自動回填驅蟲三個欄位
   document.getElementById('dewormMedicine').value = data.dewormMedicine || '';
   document.getElementById('dewormTime').value = data.dewormTime || '';
   document.getElementById('dewormRemindDate').value = data.dewormRemindDate || '';
@@ -1184,18 +1181,15 @@ async function loadWeightChart() {
   const kw = document.getElementById('searchWeightCat').value.toLowerCase().trim();
   const resultArea = document.getElementById('weightCatResult');
 
-  // 清除区域
   if (!kw) {
     if (weightChart) weightChart.destroy();
     if (resultArea) resultArea.innerHTML = '';
     return;
   }
 
-  // 抓全部猫咪
   const catSnap = await getDocs(collection(db, 'cats'));
   const catList = catSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-  // 6 字段超强搜索
   const matchedCats = catList.filter(item => 
     (item.name && item.name.toLowerCase().includes(kw)) ||
     (item.chip && item.chip.includes(kw)) ||
@@ -1205,14 +1199,12 @@ async function loadWeightChart() {
     (item.addr && item.addr.toLowerCase().includes(kw))
   );
 
-  // 如果没有结果
   if (matchedCats.length === 0) {
     if (resultArea) resultArea.innerHTML = '<div style="padding:10px;">未找到任何猫咪</div>';
     if (weightChart) weightChart.destroy();
     return;
   }
 
-  // 显示猫咪列表（给你点选）
   let html = `
     <div style="margin:15px 0; padding:10px; border:1px solid #ddd; border-radius:6px;">
       <div style="margin-bottom:8px; font-weight:bold; color:#2c5aa0;">✅ 找到以下猫咪，请点击查看体重：</div>
@@ -1234,19 +1226,16 @@ async function loadWeightChart() {
   }
 }
 
-// 点击猫咪 → 显示体重曲线图
 window.showWeightForCat = async function(catId) {
   const catSnap = await getDoc(doc(db, 'cats', catId));
   if (!catSnap.exists()) return;
   const cat = catSnap.data();
 
-  // 抓这只猫的所有病历
   const recSnap = await getDocs(query(collection(db, 'records'), where('catId', '==', catId)));
   const records = recSnap.docs.map(d => d.data())
     .filter(item => item.weight && item.visitDate)
     .sort((a, b) => new Date(a.visitDate) - new Date(b.visitDate));
 
-  // 画图
   const ctx = document.getElementById('weightChartCanvas').getContext('2d');
   if (weightChart) weightChart.destroy();
 
@@ -1287,6 +1276,7 @@ function adminLogin() {
   if (acc === '2015starmos' && pwd === 'ha821208') {
     isAdminLoggedIn = true;
     alert('✅ 管理員登入成功！');
+    document.getElementById('adminTabBtn').style.display = 'inline-flex';
     renderAdminPanel();
   } else {
     alert('❌ 帳號或密碼錯誤');
@@ -1296,6 +1286,7 @@ function adminLogin() {
 function adminLogout() {
   isAdminLoggedIn = false;
   alert('✅ 已登出管理模式');
+  document.getElementById('adminTabBtn').style.display = 'none';
   renderAdminPanel();
 }
 
@@ -1374,43 +1365,10 @@ function togglePrivacy() {
   alert('已切換個資顯示模式');
 }
 
-window.onload = function() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('visitDate').value = today;
-  showDrugList();
-  loadRemindList();
-};
-
-function prevImg(){
-  if(nowImgList.length === 0) return;
-  nowImgIndex --;
-  if(nowImgIndex < 0) nowImgIndex = nowImgList.length - 1;
-  document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
-  document.getElementById('imgPageNum').innerText = `${nowImgIndex+1} / ${nowImgList.length}`;
-}
-
-function nextImg(){
-  if(nowImgList.length === 0) return;
-  nowImgIndex ++;
-  if(nowImgIndex >= nowImgList.length) nowImgIndex = 0;
-  document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
-  document.getElementById('imgPageNum').innerText = `${nowImgIndex+1} / ${nowImgList.length}`;
-}
-
-function deleteExamPhoto(index) {
-  examFiles.splice(index, 1);
-  previewExamFiles();
-}
-
-function deleteTreatPhoto(index) {
-  treatFiles.splice(index, 1);
-  previewTreatFiles();
-}
-
 async function loadRemindList() {
   remindList = [];
   const snap = await getDocs(collection(db, 'records'));
-  const records = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  const records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   
   const catSnap = await getDocs(collection(db, 'cats'));
   const catMap = {};
@@ -1419,10 +1377,10 @@ async function loadRemindList() {
   const today = new Date();
 
   records.forEach(r => {
-    if(r.reVisitDate){
+    if (r.reVisitDate) {
       const dt = new Date(r.reVisitDate);
-      const diff = Math.ceil((dt - today)/(1000*60*60*24));
-      if(diff >= 0){
+      const diff = Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
+      if (diff >= 0) {
         remindList.push({
           name: catMap[r.catId] || '未知',
           type: '回診',
@@ -1431,9 +1389,22 @@ async function loadRemindList() {
         });
       }
     }
+
+    if (r.dewormRemindDate) {
+      const dt = new Date(r.dewormRemindDate);
+      const diff = Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
+      if (diff >= 0) {
+        remindList.push({
+          name: catMap[r.catId] || '未知',
+          type: '驅蟲',
+          date: r.dewormRemindDate,
+          days: diff
+        });
+      }
+    }
   });
 
-  remindList.sort((a,b)=>a.days - b.days);
+  remindList.sort((a, b) => a.days - b.days);
   
   const tbody = document.getElementById("remindTableBody");
   if (remindList.length === 0) {
@@ -1466,6 +1437,38 @@ function callOwner() {
   alert("📞 已通知飼主");
 }
 
+function prevImg(){
+  if(nowImgList.length === 0) return;
+  nowImgIndex --;
+  if(nowImgIndex < 0) nowImgIndex = nowImgList.length - 1;
+  document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
+  document.getElementById('imgPageNum').innerText = `${nowImgIndex+1} / ${nowImgList.length}`;
+}
+
+function nextImg(){
+  if(nowImgList.length === 0) return;
+  nowImgIndex ++;
+  if(nowImgIndex >= nowImgList.length) nowImgIndex = 0;
+  document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
+  document.getElementById('imgPageNum').innerText = `${nowImgIndex+1} / ${nowImgList.length}`;
+}
+
+function deleteExamPhoto(index) {
+  examFiles.splice(index, 1);
+  previewExamFiles();
+}
+
+function deleteTreatPhoto(index) {
+  treatFiles.splice(index, 1);
+  previewTreatFiles();
+}
+
+window.onload = function() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('visitDate').value = today;
+  showDrugList();
+  loadRemindList();
+};
 </script>
 </body>
 </html>
