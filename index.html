@@ -1335,12 +1335,50 @@ function togglePrivacy() {
   alert('已切換個資顯示模式');
 }
 
+// 啟動拖曳排序（頁面載入時自動啟用）
 window.onload = function() {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('visitDate').value = today;
   showDrugList();
   loadFavoriteList();
+
+  // 啟動照片拖曳排序
+  initPhotoSort();
 };
+
+// 照片拖曳排序核心
+function initPhotoSort() {
+  const examPreview = document.getElementById('examPhotoPreview');
+  const treatPreview = document.getElementById('treatPhotoPreview');
+
+  makeSortable(examPreview, examFiles, previewExamFiles);
+  makeSortable(treatPreview, treatFiles, previewTreatFiles);
+}
+
+function makeSortable(container, fileArray, refreshFunc) {
+  let draggedIndex = -1;
+
+  container.addEventListener('mousedown', (e) => {
+    const item = e.target.closest('.photo-item');
+    if (!item) return;
+    draggedIndex = Array.from(container.children).indexOf(item);
+  });
+
+  container.addEventListener('mouseup', (e) => {
+    if (draggedIndex === -1) return;
+    const item = e.target.closest('.photo-item');
+    if (!item) return;
+    const targetIndex = Array.from(container.children).indexOf(item);
+
+    // 交換順序
+    const temp = fileArray[draggedIndex];
+    fileArray[draggedIndex] = fileArray[targetIndex];
+    fileArray[targetIndex] = temp;
+
+    refreshFunc();
+    draggedIndex = -1;
+  });
+}
 
 // 上一張圖片
 function prevImg(){
