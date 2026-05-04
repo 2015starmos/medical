@@ -1532,8 +1532,25 @@ function updateImgPageNum(){
 }
 
 // 刪除預覽圖片
-function deleteExamPhoto(index) { examFiles.splice(index,1); previewExamFiles(); }
-function deleteTreatPhoto(index) { treatFiles.splice(index,1); previewTreatFiles(); }
+// 刪除檢驗報告預覽照片
+function deleteExamPhoto(index) {
+  // 刪除陣列裡的檔案
+  examFiles.splice(index, 1);
+  // 清空檔案選擇框 (避免重複)
+  document.getElementById('uploadExamFile').value = '';
+  // 重新渲染預覽
+  previewExamFiles();
+}
+
+// 刪除治療紀錄預覽照片
+function deleteTreatPhoto(index) {
+  // 刪除陣列裡的檔案
+  treatFiles.splice(index, 1);
+  // 清空檔案選擇框
+  document.getElementById('uploadTreatFile').value = '';
+  // 重新渲染預覽
+  previewTreatFiles();
+}
 
 window.onload = function() {
   const today = new Date().toISOString().split('T')[0];
