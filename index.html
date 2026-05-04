@@ -1125,6 +1125,30 @@ async function searchHistoryRecord() {
 
   tbody.innerHTML = recordsList.map(item => `
   <tr>
+    <td>${item.visitDate || ''}</td>
+    <td>${catMap[item.catId]?.name || '未知動物'}</td>
+    <td>${item.weight || '-'}</td>
+    <td>${(item.content || '無描述').substring(0, 50)}...</td>
+    <td>${item.reVisitDate || '-'}</td>
+    <td>
+      <button class="btn btn-outline" onclick="viewRecordDetail('${item.id}')">📄 查看</button>
+      <button class="btn btn-primary" onclick="editRecord('${item.id}')">✏️ 編輯</button>
+      <button class="btn btn-danger" onclick="deleteRecord('${item.id}')">🗑️ 刪除</button>
+    </td>
+  </tr>
+  `).join('');
+}
+
+
+
+  const tbody = document.getElementById('historyTableBody');
+  if (recordsList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">無符合條件的病歷紀錄</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = recordsList.map(item => `
+  <tr>
     <td>${item.visitDate}</td>
     <td>${catMap[item.catId]?.name || '未知動物'}</td>
     <td>${item.weight || '-'}</td>
