@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SMARTVET 獸醫電子病歷系統</title>
+  <title>獸醫電子病歷系統</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root{
@@ -995,15 +995,61 @@ async function searchHistoryRecord() {
   }
 
   tbody.innerHTML = recordsList.map(item => `
-    <tr>
-      <td>${item.visitDate}</td>
-      <td>${catMap[item.catId]?.name || '未知動物'}</td>
-      <td>${item.weight || '-'}</td>
-      <td>${(item.content || '無描述').substring(0, 50)}${(item.content && item.content.length > 50) ? '...' : ''}</td>
-      <td>${item.reVisitDate || '-'}</td>
-      <td><button class="btn btn-outline" onclick="viewRecordDetail('${item.id}')">📄 查看詳情</button></td>
-    </tr>
-  `).join('');
+  <tr>
+    <td>${item.visitDate}</td>
+    <td>${catMap[item.catId]?.name || '未知動物'}</td>
+    <td>${item.weight || '-'}</td>
+    <td>${(item.content || '無描述').substring(0, 50)}${(item.content && item.content.length > 50) ? '...' : ''}</td>
+    <td>${item.reVisitDate || '-'}</td>
+    <td>
+      <button class="btn btn-outline" onclick="viewRecordDetail('${item.id}')">📄 查看</button>
+      <button class="btn btn-primary" onclick="editRecord('${item.id}')">✏️ 編輯</button>
+      <button class="btn btn-danger" onclick="deleteRecord('${item.id}')">🗑️ 刪除</button>
+    </td>
+  </tr>
+`).join('');
+}
+
+// 編輯病歷
+async function editRecord(id) {
+  if(!confirm('確定要編輯這筆病歷嗎？')) return;
+  
+  const docRef = doc(db, 'records', id);
+  const snap = await getDoc(docRef);
+  if(!snap.exists()) return alert('查無病歷資料');
+  const data = snap.data();
+
+  // 切換到病歷頁面
+  switchTab('record', document.querySelectorAll('.tab-btn')[1]);
+  
+  // 綁定動物
+  bindCat(data.catId, '');
+
+  // 填回表單
+  document.getElementById('visitDate').value = data.visitDate || '';
+  document.getElementById('reVisitDate').value = data.reVisitDate || '';
+  document.getElementById('surgeryDate').value = data.surgeryDate || '';
+  document.getElementById('nowWeight').value = data.weight || '';
+  document.getElementById('visitContent').value = data.content || '';
+
+  // 填回用藥
+  drugList = data.drugs || [];
+  showDrugList();
+
+  alert('✅ 病歷已載入，可直接編輯\n\n請注意：儲存會產生新病歷，舊病歷不會自動覆蓋');
+}
+
+// 刪除病歷
+async function deleteRecord(id) {
+  if(!confirm('⚠️ 確定要刪除這筆病歷嗎？\n此動作無法復原！')) return;
+  
+  try {
+    await deleteDoc(doc(db, 'records', id));
+    alert('✅ 病歷刪除成功');
+    searchHistoryRecord(); // 重新整理清單
+  } catch(e) {
+    alert('❌ 刪除失敗：' + e.message);
+  }
 }
 
     async function viewRecordDetail(id){
