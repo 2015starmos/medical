@@ -900,57 +900,6 @@ function deleteDrug(index) {
   showDrugList();
 }
 
-function previewExamFiles() {
-  const files = document.getElementById('uploadExamFile').files;
-  examFiles = examFiles.concat(Array.from(files));
-  
-  const preview = document.getElementById('examPhotoPreview');
-  preview.innerHTML = '';
-
-  examFiles.forEach((file, index) => {
-    let url;
-    if(file.type.includes('pdf')){
-      url = 'https://via.placeholder.com/120/eeeeee/666666?text=PDF';
-    }else{
-      url = URL.createObjectURL(file);
-    }
-    preview.innerHTML += `
-      <div class="photo-item">
-        <img src="${url}" onclick="openImgModal('${url}')">
-        <button onclick="deleteExamPhoto(${index})" style="
-          position:absolute; top:2px; right:2px; 
-          background:red; color:white; border:none; 
-          border-radius:50%; width:20px; height:20px;
-          cursor:pointer; font-size:12px;
-        ">✕</button>
-      </div>
-    `;
-  });
-}
-
-function previewTreatFiles() {
-  const files = document.getElementById('uploadTreatFile').files;
-  treatFiles = treatFiles.concat(Array.from(files));
-  
-  const preview = document.getElementById('treatPhotoPreview');
-  preview.innerHTML = '';
-
-  treatFiles.forEach((file, index) => {
-    const url = URL.createObjectURL(file);
-    preview.innerHTML += `
-      <div class="photo-item">
-        <img src="${url}" onclick="openImgModal('${url}')">
-        <button onclick="deleteTreatPhoto(${index})" style="
-          position:absolute; top:2px; right:2px; 
-          background:red; color:white; border:none; 
-          border-radius:50%; width:20px; height:20px;
-          cursor:pointer; font-size:12px;
-        ">✕</button>
-      </div>
-    `;
-  });
-}
-
 async function uploadFiles(files, path){
   const urls = [];
   for(const f of files){
@@ -1512,7 +1461,6 @@ function doneRemind(index) {
   remindList.splice(index, 1);
   loadRemindList();
 }
-
 // 圖片翻頁
 function prevImg(){
   if(nowImgList.length === 0) return;
@@ -1531,25 +1479,103 @@ function updateImgPageNum(){
   document.getElementById('imgPageNum').innerText = `${nowImgIndex+1} / ${nowImgList.length}`;
 }
 
-// 刪除預覽圖片
-// 刪除檢驗報告預覽照片
+// ==== 檢驗報告圖片預覽（修復版）====
+function previewExamFiles() {
+  const files = document.getElementById('uploadExamFile').files;
+  examFiles = Array.from(files);
+
+  const preview = document.getElementById('examPhotoPreview');
+  preview.innerHTML = '';
+
+  examFiles.forEach((file, index) => {
+    let url;
+    if(file.type.includes('pdf')){
+      url = 'https://via.placeholder.com/120/eeeeee/666666?text=PDF';
+    }else{
+      url = URL.createObjectURL(file);
+    }
+    preview.innerHTML += `
+      <div class="photo-item">
+        <img src="${url}" onclick="openImgModal('${url}')">
+        <button onclick="deleteExamPhoto(${index})" style="
+          position:absolute; top:2px; right:2px; 
+          background:red; color:white; border:none; 
+          border-radius:50%; width:20px; height:20px;
+          cursor:pointer; font-size:12px;
+        ">✕</button>
+      </div>
+    `;
+  });
+}
+
+// ==== 治療紀錄圖片預覽（修復版）====
+function previewTreatFiles() {
+  const files = document.getElementById('uploadTreatFile').files;
+  treatFiles = Array.from(files);
+
+  const preview = document.getElementById('treatPhotoPreview');
+  preview.innerHTML = '';
+
+  treatFiles.forEach((file, index) => {
+    const url = URL.createObjectURL(file);
+    preview.innerHTML += `
+      <div class="photo-item">
+        <img src="${url}" onclick="openImgModal('${url}')">
+        <button onclick="deleteTreatPhoto(${index})" style="
+          position:absolute; top:2px; right:2px; 
+          background:red; color:white; border:none; 
+          border-radius:50%; width:20px; height:20px;
+          cursor:pointer; font-size:12px;
+        ">✕</button>
+      </div>
+    `;
+  });
+}
+
+// ==== 刪除檢驗報告照片（修復版）====
 function deleteExamPhoto(index) {
-  // 刪除陣列裡的檔案
   examFiles.splice(index, 1);
-  // 清空檔案選擇框 (避免重複)
-  document.getElementById('uploadExamFile').value = '';
-  // 重新渲染預覽
+  
+  const dt = new DataTransfer();
+  examFiles.forEach(file => dt.items.add(file));
+  document.getElementById('uploadExamFile').files = dt.files;
+  
   previewExamFiles();
 }
 
-// 刪除治療紀錄預覽照片
+// ==== 刪除治療紀錄照片（修復版）====
 function deleteTreatPhoto(index) {
-  // 刪除陣列裡的檔案
   treatFiles.splice(index, 1);
-  // 清空檔案選擇框
-  document.getElementById('uploadTreatFile').value = '';
-  // 重新渲染預覽
+  
+  const dt = new DataTransfer();
+  treatFiles.forEach(file => dt.items.add(file));
+  document.getElementById('uploadTreatFile').files = dt.files;
+  
   previewTreatFiles();
+}
+
+window.onload = function() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('visitDate').value = today;
+  showDrugList();
+  loadRemindList();
+};
+// 圖片翻頁
+function prevImg(){
+  if(nowImgList.length === 0) return;
+  nowImgIndex = (nowImgIndex - 1 + nowImgList.length) % nowImgList.length;
+  document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
+  updateImgPageNum();
+}
+function nextImg(){
+  if(nowImgList.length === 0) return;
+  nowImgIndex = (nowImgIndex + 1) % nowImgList.length;
+  document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
+  updateImgPageNum();
+}
+function updateImgPageNum(){
+  if(!nowImgList.length) return;
+  document.getElementById('imgPageNum').innerText = `${nowImgIndex+1} / ${nowImgList.length}`;
 }
 
 window.onload = function() {
