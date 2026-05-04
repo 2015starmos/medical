@@ -450,7 +450,7 @@
             <button class="btn btn-warning" style="flex:1;padding:10px;font-size:14px;" onclick="saveDraftRecord()">
               💾 儲存草稿
             </button>
-            <button class="btn btn-success" style="flex:1;padding:10px;font-size:14px;" onclick="saveFullRecord()">
+            <button id="saveBtn" class="btn btn-success" style="flex:1;padding:10px;font-size:14px;" onclick="saveFullRecord()">
               📋 儲存正式病歷
             </button>
           </div>
@@ -846,21 +846,24 @@ function deleteDrug(index) {
   showDrugList();
 }
 
+/** 
+ * 優化後的多圖並行上傳函數
+ */
 async function uploadFiles(files, path){
-  const urls = [];
-  for(const f of files){
-    try {
-      const name = `${path}/${Date.now()}_${f.name}`;
-      const fileRef = ref(storage, name);
-      await uploadBytes(fileRef, f);
-      const url = await getDownloadURL(fileRef);
-      urls.push(url);
-    } catch (e) {
-      console.error("Upload error:", e);
-      throw new Error(`檔案 ${f.name} 上傳失敗: ${e.message}`);
-    }
-  }
-  return urls;
+  if (!files || files.length === 0) return [];
+  
+  // 使用 Promise.all 並行上傳，顯著提升速度
+  const uploadPromises = Array.from(files).map(async (f) => {
+    // 加入隨機字串防止併發時檔名衝突
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const fileName = `${path}/${Date.now()}_${randomStr}_${f.name}`;
+    const fileRef = ref(storage, fileName);
+    
+    await uploadBytes(fileRef, f);
+    return await getDownloadURL(fileRef);
+  });
+
+  return await Promise.all(uploadPromises);
 }
 
 async function saveDraftRecord() {
@@ -898,16 +901,19 @@ async function saveFullRecord() {
   if (!content) return alert('❌ 請填寫症狀/看診內容！');
   if (!confirm('確定儲存病歷？')) return;
 
-  try {
-    // 顯示上傳中提示
-    const btn = event.target;
-    const originalText = btn.innerText;
-    btn.innerText = "⏳ 上傳圖片中...";
-    btn.disabled = true;
+  const saveBtn = document.getElementById('saveBtn');
+  const originalText = saveBtn.innerText;
 
-    // 分別上傳檢驗報告與治療照片
-    const examUrls = await uploadFiles(examFiles, `exam/${currentCatId}`);
-    const treatUrls = await uploadFiles(treatFiles, `treat/${currentCatId}`);
+  try {
+    // 鎖定按鈕避免重複觸發
+    saveBtn.innerText = "⏳ 圖片上傳並儲存中...";
+    saveBtn.disabled = true;
+
+    // 並行執行兩組上傳任務
+    const [examUrls, treatUrls] = await Promise.all([
+      uploadFiles(examFiles, `exam/${currentCatId}`),
+      uploadFiles(treatFiles, `treat/${currentCatId}`)
+    ]);
 
     const data = {
       recordId: currentRecordId,
@@ -938,7 +944,7 @@ async function saveFullRecord() {
       alert('✅ 新病歷儲存成功！');
     }
     
-    // 清空表單
+    // 清空表單與預覽
     drugList = [];
     showDrugList();
     document.getElementById('visitContent').value = '';
@@ -950,17 +956,18 @@ async function saveFullRecord() {
     document.getElementById('uploadExamFile').value = '';
     document.getElementById('uploadTreatFile').value = '';
     document.querySelectorAll('.symptom-tag').forEach(tag => tag.classList.remove('active'));
+    
     currentRecordId = generateRecordId();
     showRecordIdBar();
     loadRemindList();
     searchHistoryRecord();
 
-    btn.innerText = originalText;
-    btn.disabled = false;
   } catch (e) {
+    console.error(e);
     alert('❌ 儲存失敗：' + e.message);
-    const btn = document.querySelector('.btn-success[onclick="saveFullRecord()"]');
-    if(btn) { btn.innerText = "📋 儲存正式病歷"; btn.disabled = false; }
+  } finally {
+    saveBtn.innerText = originalText;
+    saveBtn.disabled = false;
   }
 }
 
