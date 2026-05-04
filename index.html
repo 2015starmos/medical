@@ -1,1 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>獸醫電子病歷系統</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --primary:#2c5aa0;
+      --secondary:#f9a825;
+      --success:#2ecc71;
+      --danger:#e74c3c;
+      --info:#3498db;
+      --warning:#f39c12;
+      --gray-light:#f5f5f5;
+      --gray:#ddd;
+      --gray-dark:#999;
+      --text:#333;
+      --white:#fff;
+      --black:#222;
+    }
 
+    *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft JhengHei", "Arial", sans-serif;}
+    body{background:#f0f2f5;color:var(--text);font-size:13px;line-height:1.4;}
+    
+    .header{
+      background:linear-gradient(135deg, var(--primary), #1a3d7a);
+      color:var(--white);
+      padding:12px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      box-shadow:0 2px 8px rgba(0,0,0,0.15);
+      position:sticky;
+      top:0;
+      z-index:100;
+    }
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo img{width:40px;height:40px;border-radius:50%;}
+    .logo h1{font-size:18px;font-weight:bold;}
+    .nav-menu{display:flex;gap:15px;}
+    .nav-menu a{color:var(--white);text-decoration:none;padding:6px 12px;border-radius:4px;transition:0.2s;}
+    .nav-menu a:hover{background:rgba(255,255,255,0.2);}
+    .nav-menu a.active{background:var(--secondary);color:var(--black);font-weight:bold;}
+
+    .container{max-width:1600px;margin:15px auto;padding:0 10px;}
+    
+    .tab-container{background:var(--white);border:1px solid var(--gray);border-radius:6px;margin-bottom:15px;}
+    .tab-header{display:flex;border-bottom:1px solid var(--gray);background:var(--gray-light);}
+    .tab-btn{
+      padding:10px 20px;border:none;background:transparent;cursor:pointer;
+      font-size:13px;font-weight:500;border-right:1px solid var(--gray);
+      transition:0.2s;
+    }
+    .tab-btn:hover{background:rgba(44,90,160,0.1);}
+    .tab-btn.active{
+      background:var(--primary);color:var(--white);
+      position:relative;
+    }
+    .tab-btn.active::after{
+      content:'';position:absolute;bottom:-1px;left:0;width:100%;height:2px;background:var(--secondary);
+    }
+    .tab-content{padding:15px;}
+    .page{display:none;}
+    .page.active{display:block;animation:fadeIn 0.3s ease;}
+
+    .section{
+      background:var(--white);border:1px solid var(--gray);border-radius:6px;
+      margin-bottom:15px;box-shadow:0 1px 3px rgba(0,0,0,0.05);
+    }
+    .section-header{
+      padding:10px 15px;border-bottom:1px solid var(--gray);
+      background:linear-gradient(to right, var(--primary), #3b6bb3);
+      color:var(--white);font-weight:bold;display:flex;
+      justify-content:space-between;align-items:center;
+    }
+    .section-body{padding:15px;}
+    
+    .data-table{width:100%;border-collapse:collapse;margin:10px 0;}
+    .data-table th{
+      background:var(--gray-light);padding:8px 6px;text-align:center;
+      border:1px solid var(--gray);font-weight:bold;color:var(--primary);
+    }
+    .data-table td{
+      padding:8px 6px;border:1px solid var(--gray);text-align:left;
+      vertical-align:middle;
+    }
+    .data-table tr:hover{background:rgba(44,90,160,0.05);}
+    .data-table .highlight{background:#fff3cd;}
+    .data-table .warning{background:#f8d7da;color:var(--danger);font-weight:bold;}
+    .data-table .success{background:#d4edda;color:var(--success);}
+
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0;}
+    .form-group{margin:8px 0;}
+    .form-group label{display:block;margin-bottom:4px;font-weight:500;color:var(--primary);}
+    input,select,textarea{
+      width:100%;padding:7px 10px;border:1px solid var(--gray);
+      border-radius:4px;font-size:13px;transition:0.2s;
+    }
+    input:focus,select:focus,textarea:focus{
+      outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(44,90,160,0.2);
+    }
+    textarea{resize:vertical;min-height:80px;}
+
+    .btn{
+      padding:7px 15px;border-radius:4px;border:none;cursor:pointer;
+      font-size:12px;font-weight:500;transition:0.2s;
+      display:inline-flex;align-items:center;gap:5px;
+    }
+    .btn-primary{background:var(--primary);color:var(--white);}
+    .btn-primary:hover{background:#1a3d7a;}
+    .btn-success{background:var(--success);color:var(--white);}
+    .btn-success:hover{background:#27ae60;}
+    .btn-danger{background:var(--danger);color:var(--white);}
+    .btn-danger:hover{background:#c0392b;}
+    .btn-warning{background:var(--warning);color:var(--white);}
+    .btn-warning:hover{background:#e67e22;}
+    .btn-outline{background:transparent;border:1px solid var(--primary);color:var(--primary);}
+    .btn-outline:hover{background:var(--primary);color:var(--white);}
+
+    .symptom-tags{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;}
+    .symptom-tag{
+      padding:5px 12px;background:var(--gray-light);border-radius:20px;
+      font-size:12px;cursor:pointer;border:1px solid var(--gray);
+    }
+    .symptom-tag.active{
+      background:var(--primary);color:var(--white);border-color:var(--primary);
+    }
+
+    .photo-grid{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;}
+    .photo-item{
+      width:120px;height:100px;border:1px solid var(--gray);
+      border-radius:4px;overflow:hidden;background:var(--gray-light);
+    }
+    .photo-item img{width:100%;height:100%;object-fit:contain;cursor:pointer;}
+
+    .modal{
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      background:rgba(0,0,0,0.8);display:none;z-index:9999;
+      align-items:center;justify-content:center;
+    }
+    .modal-content{max-width:90%;max-height:85vh;}
+    .modal-img{max-width:100%;max-height:85vh;border-radius:6px;border:3px solid var(--white);}
+
+    @media (max-width:768px){
+      .tab-header{flex-wrap:wrap;}
+      .tab-btn{flex:1 1 auto;text-align:center;padding:8px 5px;}
+      .form-grid{grid-template-columns:1fr;}
+      .data-table{font-size:12px;}
+      .data-table th,.data-table td{padding:5px 3px;}
+    }
+
+    @keyframes fadeIn {
+      from {opacity:0;}
+      to {opacity:1;}
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <img src="https://via.placeholder.com/40/2c5aa0/ffffff?text=SV" alt="SMARTVET">
+      <h1>獸醫電子病歷系統</h1>
+    </div>
+    <div class="nav-menu">
+      <a href="#" class="active">🖥️系統首頁</a>
+      <a href="javascript:switchTab('admin', document.querySelectorAll('.tab-btn')[6])">🔧 管理後台</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="tab-container">
+      <div class="tab-header">
+        <button class="tab-btn active" onclick="switchTab('cat',this)">🐱 動物基本資料</button>
+        <button class="tab-btn" onclick="switchTab('record',this)">📝 建立病歷紀錄</button>
+        <button class="tab-btn" onclick="switchTab('history',this)">🔍 病歷查詢</button>
+        <button class="tab-btn" onclick="switchTab('weight',this)">📊 體重追蹤</button>
+        <button class="tab-btn" onclick="switchTab('remind',this)">⚠️ 疫苗/回診提醒</button>
+        <button class="tab-btn" onclick="switchTab('favorite',this)">⭐ 常用動物</button>
+        <button class="tab-btn" onclick="switchTab('admin',this)">🔧 管理後台</button>
+      </div>
+
+      <div class="tab-content">
+        <div id="cat" class="page active">
+          <div class="section">
+            <div class="section-header">
+              <span>新增/編輯動物基本資料</span>
+              <button class="btn btn-outline" onclick="clearCatForm()">🗑️ 清空表單</button>
+            </div>
+            <div class="section-body">
+              <input type="hidden" id="editCatId">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>動物姓名</label>
+                  <input type="text" id="catName" placeholder="請輸入動物姓名">
+                </div>
+                <div class="form-group">
+                  <label>晶片號碼</label>
+                  <input type="text" id="chipId" placeholder="請輸入晶片號碼">
+                </div>
+                <div class="form-group">
+                  <label>性別</label>
+                  <select id="catGender">
+                    <option value="公">公</option>
+                    <option value="母">母</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>品種</label>
+                  <input type="text" id="catBreed" placeholder="請輸入動物品種">
+                </div>
+                <div class="form-group">
+                  <label>出生日期</label>
+                  <input type="date" id="catBirth">
+                </div>
+                <div class="form-group">
+                  <label>結紮狀態</label>
+                  <select id="catNeuter">
+                    <option value="未結紮">未結紮</option>
+                    <option value="已結紮">已結紮</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>飼主姓名</label>
+                  <input type="text" id="ownerName" placeholder="請輸入飼主姓名">
+                </div>
+                <div class="form-group">
+                  <label>飼主手機</label>
+                  <input type="text" id="ownerPhone" placeholder="請輸入飼主手機">
+                </div>
+                <div class="form-group">
+                  <label>緊急聯繫電話</label>
+                  <input type="text" id="ownerPhone2" placeholder="請輸入備用電話">
+                </div>
+                <div class="form-group">
+                  <label>飼主身分證</label>
+                  <input type="text" id="ownerId" placeholder="請輸入身分證字號">
+                </div>
+                <div class="form-group">
+                  <label>居住地址</label>
+                  <input type="text" id="ownerAddr" placeholder="請輸入居住地址">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>備註資訊</label>
+                <textarea id="catNote" placeholder="個性、藥物過敏、先天病史、照護注意事項等"></textarea>
+              </div>
+              <button class="btn btn-primary" onclick="saveCatData()">💾 儲存資料</button>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span>動物資料查詢（姓名/飼主/手機/晶片號）</span>
+            </div>
+            <div class="section-body">
+              <div class="form-group">
+                <label>搜尋關鍵字</label>
+                <input type="text" id="searchCatInput" placeholder="輸入關鍵字立即搜尋" oninput="searchCatAll()">
+              </div>
+              <div id="catSearchResult">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>動物姓名</th>
+                      <th>晶片號</th>
+                      <th>性別/結紮</th>
+                      <th>飼主</th>
+                      <th>聯繫電話</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="catTableBody">
+                    <tr><td colspan="6" style="text-align:center;">請輸入關鍵字搜尋動物資料</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="record" class="page">
+          <div class="section">
+            <div class="section-header">
+              <span>綁定就診動物</span>
+            </div>
+            <div class="section-body">
+              <div class="form-group">
+                <label>搜尋動物</label>
+                <input type="text" id="searchRecordCat" placeholder="輸入動物姓名/晶片號搜尋" oninput="searchCatForRecord()">
+              </div>
+              <div id="bindCatInfo" style="margin:10px 0;padding:10px;border:1px dashed var(--gray);border-radius:4px;">
+                尚未綁定動物，請先搜尋並選擇欲建立病歷的動物
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span>就診基本資訊</span>
+            </div>
+            <div class="section-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>就診日期</label>
+                  <input type="date" id="visitDate">
+                </div>
+                <div class="form-group">
+                  <label>回診日期</label>
+                  <input type="date" id="reVisitDate">
+                </div>
+                <div class="form-group">
+                  <label>手術日期</label>
+                  <input type="date" id="surgeryDate">
+                </div>
+                <div class="form-group">
+                  <label>本次體重 (kg)</label>
+                  <input type="number" id="nowWeight" step="0.01" placeholder="輸入體重">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>症狀描述/看診內容</label>
+                <textarea id="visitContent" placeholder="詳細描述症狀、檢查結果、診斷內容等"></textarea>
+              </div>
+              <div>
+                <label style="display:block;margin:10px 0 5px 0;">快速選擇症狀：</label>
+                <div class="symptom-tags">
+                  <span class="symptom-tag" onclick="addSymptom(this)">嘔吐</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">腹瀉</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">食慾差</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">精神萎靡</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">頻尿</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">血尿</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">皮膚病</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">口炎</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span>用藥紀錄</span>
+              <button class="btn btn-success" onclick="addDrugItem()">➕ 新增用藥</button>
+            </div>
+            <div class="section-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>藥品名稱</label>
+                  <input type="text" id="drugName" placeholder="輸入藥品名稱">
+                </div>
+                <div class="form-group">
+                  <label>劑量</label>
+                  <input type="text" id="drugDose" placeholder="輸入用藥劑量">
+                </div>
+                <div class="form-group">
+                  <label>每日次數</label>
+                  <input type="text" id="drugTimes" placeholder="輸入每日服用次數">
+                </div>
+                <div class="form-group">
+                  <label>開始日期</label>
+                  <input type="date" id="drugStartDate">
+                </div>
+                <div class="form-group">
+                  <label>結束日期</label>
+                  <input type="date" id="drugEndDate">
+                </div>
+                <div class="form-group">
+                  <label>備註</label>
+                  <input type="text" id="drugRemark" placeholder="用藥注意事項">
+                </div>
+              </div>
+              <div id="drugListShow" style="margin-top:15px;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>藥品名稱</th>
+                      <th>劑量</th>
+                      <th>服用次數</th>
+                      <th>用藥期間</th>
+                      <th>備註</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="drugTableBody">
+                    <tr><td colspan="6" style="text-align:center;">尚未新增用藥紀錄</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span>檢驗報告/影像檔案上傳</span>
+            </div>
+            <div class="section-body">
+              <div class="form-group">
+                <label>檔案類型</label>
+                <select id="photoType">
+                  <option value="檢驗報告">檢驗報告</option>
+                  <option value="術前照片">術前照片</option>
+                  <option value="術後照片">術後照片</option>
+                  <option value="皮膚病灶">皮膚病灶</option>
+                  <option value="眼鼻症狀">眼鼻症狀</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>選擇檔案 (支援圖片/PDF)</label>
+                <input type="file" multiple accept="image/*,.pdf" id="uploadExamFile" onchange="previewExamFiles()">
+              </div>
+              <div class="photo-grid" id="examPhotoPreview"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span>治療紀錄照片</span>
+            </div>
+            <div class="section-body">
+              <div class="form-group">
+                <label>選擇照片檔案</label>
+                <input type="file" multiple accept="image/*" id="uploadTreatFile" onchange="previewTreatFiles()">
+              </div>
+              <div class="photo-grid" id="treatPhotoPreview"></div>
+            </div>
+          </div>
+
+          <button class="btn btn-success" style="width:100%;padding:10px;font-size:14px;margin-top:10px;" onclick="saveFullRecord()">
+            📋 儲存完整病歷資料
+          </button>
+        </div>
+
+        <div id="history" class="page">
+          <div class="section">
+            <div class="section-header">
+              <span>病歷進階查詢</span>
+            </div>
+            <div class="section-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>開始日期</label>
+                  <input type="date" id="filterStart">
+                </div>
+                <div class="form-group">
+                  <label>結束日期</label>
+                  <input type="date" id="filterEnd">
+                </div>
+                <div class="form-group">
+                  <label>貓咪搜尋（貓名/飼主/晶片/地址）</label>
+                  <input type="text" id="filterKey" placeholder="輸入關鍵字查詢">
+                </div>
+                <div class="form-group" style="align-self:end;">
+                  <button class="btn btn-primary" onclick="searchHistoryRecord()">🔍 執行查詢</button>
+                </div>
+              </div>
+              <div id="historyRecordList" style="margin-top:15px;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>就診日期</th>
+                      <th>動物姓名</th>
+                      <th>體重 (kg)</th>
+                      <th>主要症狀</th>
+                      <th>回診日期</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="historyTableBody">
+                    <tr><td colspan="6" style="text-align:center;">請設定查詢條件並執行查詢</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="weight" class="page">
+          <div class="section">
+            <div class="section-header">
+              <span>動物體重變化曲線圖</span>
+            </div>
+            <div class="section-body">
+              <div class="form-group">
+                <label>搜尋動物</label>
+                <input type="text" id="searchWeightCat" placeholder="輸入動物姓名顯示體重曲線" oninput="loadWeightChart()">
+              </div>
+              <canvas id="weightChartCanvas" style="margin-top:15px;"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div id="remind" class="page">
+          <div class="section">
+            <div class="section-header">
+              <span>疫苗/驅蟲/回診到期提醒 <span style="color:var(--danger);font-size:12px;">(紅色=即將到期)</span></span>
+            </div>
+            <div class="section-body">
+              <table class="data-table" id="remindListShow">
+                <thead>
+                  <tr>
+                    <th>動物姓名</th>
+                    <th>提醒類型</th>
+                    <th>到期日期</th>
+                    <th>剩餘天數</th>
+                    <th>狀態</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="warning"><td>小橘</td><td>狂犬病疫苗</td><td>2025-12-20</td><td>15天</td><td>即將到期</td><td><button class="btn btn-warning">✅ 已處理</button></td></tr>
+                  <tr><td>小黑</td><td>回診檢查</td><td>2026-01-10</td><td>36天</td><td>正常</td><td><button class="btn btn-outline">📞 提醒飼主</button></td></tr>
+                  <tr class="success"><td>小白</td><td>驅蟲</td><td>2026-02-15</td><td>72天</td><td>正常</td><td><button class="btn btn-outline">📞 提醒飼主</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="favorite" class="page">
+          <div class="section">
+            <div class="section-header">
+              <span>常用動物清單 (一鍵選取)</span>
+            </div>
+            <div class="section-body">
+              <table class="data-table" id="favoriteListShow">
+                <thead>
+                  <tr>
+                    <th>動物姓名</th>
+                    <th>晶片號</th>
+                    <th>飼主</th>
+                    <th>聯繫電話</th>
+                    <th>最近就診</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="highlight" onclick="bindCat('1','小橘')">
+                    <td>小橘</td><td>987654321</td><td>陳先生</td><td>0912345678</td><td>2025-11-20</td>
+                    <td>
+                      <button class="btn btn-primary">📝 建立病歷</button>
+                      <button class="btn btn-outline">🗑️ 移除</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="admin" class="page">
+          <div class="section">
+            <div class="section-header">
+              <span>管理員權限管控</span>
+            </div>
+            <div class="section-body">
+              <div class="form-grid" style="max-width:500px;">
+                <div class="form-group">
+                  <label>管理員帳號</label>
+                  <input type="text" id="adminAcc" placeholder="請輸入管理員帳號">
+                </div>
+                <div class="form-group">
+                  <label>管理員密碼</label>
+                  <input type="password" id="adminPwd" placeholder="請輸入管理員密碼">
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="adminLogin()">🔐 登入管理後台</button>
+              <div style="margin-top:20px;padding:15px;background:var(--gray-light);border-radius:4px;">
+                <h4 style="color:var(--primary);margin-bottom:10px;">管理員功能：</h4>
+                <ul style="padding-left:20px;line-height:1.8;">
+                  <li>個資隱藏/顯示切換</li>
+                  <li>系統操作日誌查詢</li>
+                  <li>批次匯入/匯出動物資料</li>
+                  <li>病歷資料備份還原</li>
+                  <li>使用者權限管理</li>
+                  <li>系統參數設定</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="imgModal" onclick="closeImgModal()">
+    <div class="modal-content">
+      <img src="" id="showBigImg" class="modal-img">
+    </div>
+  </div>
+
+  <script type="module">
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, where, query, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyB2yEi76WZfALxNkInhG5oG_0LMlNqDgH0",
+  authDomain: "nibo-medical.firebaseapp.com",
+  projectId: "nibo-medical",
+  storageBucket: "nibo-medical.firebasestorage.app",
+  messagingSenderId: "832769973754",
+  appId: "1:832769973754:web:9e7782b36bfc89d02a5843"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+window.db = db;
+window.storage = storage;
+window.collection = collection;
+window.addDoc = addDoc;
+window.getDocs = getDocs;
+window.doc = doc;
+window.updateDoc = updateDoc;
+window.deleteDoc = deleteDoc;
+window.where = where;
+window.query = query;
+window.getDoc = getDoc;
+window.ref = ref;
+window.uploadBytes = uploadBytes;
+window.getDownloadURL = getDownloadURL;
+</script>
+
+  <script>
+    let currentCatId = null;
+    let drugList = [];
+    let examFiles = [];
+    let treatFiles = [];
+    let weightChart = null;
+
+    function switchTab(id, btn) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function addSymptom(el) {
+      el.classList.toggle('active');
+      let val = el.innerText;
+      let content = document.getElementById('visitContent');
+      if (el.classList.contains('active')) {
+        if(!content.value.includes(val)){
+          content.value += val + "、";
+        }
+      } else {
+        content.value = content.value.replace(val + "、", "");
+      }
+    }
+
+    function openImgModal(src) {
+      document.getElementById('showBigImg').src = src;
+      document.getElementById('imgModal').style.display = 'flex';
+    }
+    function closeImgModal() {
+      document.getElementById('imgModal').style.display = 'none';
+    }
+
+    function clearCatForm() {
+      document.getElementById('editCatId').value = '';
+      document.getElementById('catName').value = '';
+      document.getElementById('chipId').value = '';
+      document.getElementById('catBreed').value = '';
+      document.getElementById('catBirth').value = '';
+      document.getElementById('ownerName').value = '';
+      document.getElementById('ownerPhone').value = '';
+      document.getElementById('ownerPhone2').value = '';
+      document.getElementById('ownerId').value = '';
+      document.getElementById('ownerAddr').value = '';
+      document.getElementById('catNote').value = '';
+    }
+
+    async function saveCatData() {
+      const id = document.getElementById('editCatId').value;
+      const data = {
+        name: document.getElementById('catName').value,
+        chip: document.getElementById('chipId').value,
+        gender: document.getElementById('catGender').value,
+        breed: document.getElementById('catBreed').value,
+        birth: document.getElementById('catBirth').value,
+        neuter: document.getElementById('catNeuter').value,
+        owner: document.getElementById('ownerName').value,
+        phone: document.getElementById('ownerPhone').value,
+        phone2: document.getElementById('ownerPhone2').value,
+        ownerId: document.getElementById('ownerId').value,
+        addr: document.getElementById('ownerAddr').value,
+        note: document.getElementById('catNote').value,
+        createTime: new Date().toISOString()
+      };
+
+      if (!data.name) return alert('請輸入動物姓名');
+      if (!data.owner) return alert('請輸入飼主姓名');
+      if (!data.phone) return alert('請輸入飼主聯繫電話');
+
+      try {
+        if (id) {
+          await updateDoc(doc(db, 'cats', id), data);
+          alert('✅ 動物資料編輯完成');
+        } else {
+          await addDoc(collection(db, 'cats'), data);
+          alert('✅ 動物資料新增成功');
+        }
+        clearCatForm();
+        searchCatAll();
+      } catch (e) {
+        alert('❌ 儲存失敗：' + e.message);
+      }
+    }
+
+    async function searchCatAll() {
+      const kw = document.getElementById('searchCatInput').value.toLowerCase();
+      const snap = await getDocs(collection(db, 'cats'));
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const res = list.filter(i =>
+        (i.name && i.name.toLowerCase().includes(kw)) ||
+        (i.owner && i.owner.toLowerCase().includes(kw)) ||
+        (i.phone && i.phone.includes(kw)) ||
+        (i.chip && i.chip.includes(kw)) ||
+        (i.ownerId && i.ownerId.includes(kw))
+      );
+
+      const tbody = document.getElementById('catTableBody');
+      if (res.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">無符合條件的動物資料</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = res.map(i => `
+        <tr>
+          <td>${i.name || '-'}</td>
+          <td>${i.chip || '-'}</td>
+          <td>${i.gender}/${i.neuter}</td>
+          <td>${i.owner || '-'}</td>
+          <td>${i.phone || '-'}</td>
+          <td>
+            <button class="btn btn-outline" onclick="editCat('${i.id}')">✏️ 編輯</button>
+            <button class="btn btn-primary" onclick="bindCat('${i.id}','${i.name}')">📝 綁定</button>
+            <button class="btn btn-warning" onclick="toggleFavorite('${i.id}','${i.name}')">⭐ 最愛</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function editCat(id) {
+      const docRef = doc(db, 'cats', id);
+      const snap = await getDoc(docRef);
+      if(!snap.exists()) return alert('查無此資料');
+      const d = snap.data();
+
+      document.getElementById('editCatId').value = id;
+      document.getElementById('catName').value = d.name || '';
+      document.getElementById('chipId').value = d.chip || '';
+      document.getElementById('catGender').value = d.gender || '公';
+      document.getElementById('catBreed').value = d.breed || '';
+      document.getElementById('catBirth').value = d.birth || '';
+      document.getElementById('catNeuter').value = d.neuter || '未結紮';
+      document.getElementById('ownerName').value = d.owner || '';
+      document.getElementById('ownerPhone').value = d.phone || '';
+      document.getElementById('ownerPhone2').value = d.phone2 || '';
+      document.getElementById('ownerId').value = d.ownerId || '';
+      document.getElementById('ownerAddr').value = d.addr || '';
+      document.getElementById('catNote').value = d.note || '';
+    }
+
+    function bindCat(id, name) {
+      currentCatId = id;
+      document.getElementById('bindCatInfo').innerHTML = `
+        <div style="background:#d4edda;padding:10px;border-radius:4px;color:var(--success);font-weight:bold;">
+          ✅ 已成功綁定：${name} (ID: ${id})
+          <button class="btn btn-outline" style="margin-left:10px;" onclick="unbindCat()">解除綁定</button>
+        </div>
+      `;
+    }
+
+    function unbindCat(){
+      currentCatId = null;
+      document.getElementById('bindCatInfo').innerHTML = '尚未綁定動物，請先搜尋並選擇欲建立病歷的動物';
+    }
+
+    async function searchCatForRecord() {
+      const kw = document.getElementById('searchRecordCat').value.toLowerCase();
+      if(!kw){
+        document.getElementById('bindCatInfo').innerHTML = '尚未綁定動物，請先搜尋並選擇欲建立病歷的動物';
+        return;
+      }
+      const snap = await getDocs(collection(db, 'cats'));
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const res = list.filter(i =>
+        (i.name && i.name.toLowerCase().includes(kw)) ||
+        (i.chip && i.chip.includes(kw))
+      );
+
+      let html = '';
+      if (res.length > 0) {
+        html = '<table class="data-table"><thead><tr><th>姓名</th><th>晶片號</th><th>飼主</th><th>操作</th></tr></thead><tbody>';
+        html += res.map(i => `
+          <tr>
+            <td>${i.name}</td>
+            <td>${i.chip || '-'}</td>
+            <td>${i.owner}</td>
+            <td><button class="btn btn-primary" onclick="bindCat('${i.id}','${i.name}')">選擇此動物</button></td>
+          </tr>
+        `).join('');
+        html += '</tbody></table>';
+      } else {
+        html = '未找到符合條件的動物';
+      }
+      document.getElementById('bindCatInfo').innerHTML = html;
+    }
+
+    function addDrugItem() {
+      const item = {
+        name: document.getElementById('drugName').value,
+        dose: document.getElementById('drugDose').value,
+        times: document.getElementById('drugTimes').value,
+        start: document.getElementById('drugStartDate').value,
+        end: document.getElementById('drugEndDate').value,
+        remark: document.getElementById('drugRemark').value
+      };
+
+      if (!item.name) return alert('請輸入藥品名稱');
+      if (!item.dose) return alert('請輸入用藥劑量');
+
+      drugList.push(item);
+      showDrugList();
+
+      document.getElementById('drugName').value = '';
+      document.getElementById('drugDose').value = '';
+      document.getElementById('drugTimes').value = '';
+      document.getElementById('drugStartDate').value = '';
+      document.getElementById('drugEndDate').value = '';
+      document.getElementById('drugRemark').value = '';
+    }
+
+    function showDrugList() {
+      const tbody = document.getElementById('drugTableBody');
+      if (drugList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">尚未新增用藥紀錄</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = drugList.map((item, index) => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.dose}</td>
+          <td>${item.times || '-'}</td>
+          <td>${item.start || '-'} ~ ${item.end || '-'}</td>
+          <td>${item.remark || '-'}</td>
+          <td><button class="btn btn-danger" onclick="deleteDrug(${index})">🗑️ 刪除</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function deleteDrug(index) {
+      drugList.splice(index, 1);
+      showDrugList();
+    }
+
+    function previewExamFiles() {
+      const files = document.getElementById('uploadExamFile').files;
+      examFiles = Array.from(files);
+      const preview = document.getElementById('examPhotoPreview');
+      preview.innerHTML = '';
+
+      files.forEach(file => {
+        const url = URL.createObjectURL(file);
+        preview.innerHTML += `
+          <div class="photo-item">
+            <img src="${url}" onclick="openImgModal('${url}')" title="${file.name}">
+          </div>
+        `;
+      });
+    }
+
+    function previewTreatFiles() {
+      const files = document.getElementById('uploadTreatFile').files;
+      treatFiles = Array.from(files);
+      const preview = document.getElementById('treatPhotoPreview');
+      preview.innerHTML = '';
+
+      files.forEach(file => {
+        const url = URL.createObjectURL(file);
+        preview.innerHTML += `
+          <div class="photo-item">
+            <img src="${url}" onclick="openImgModal('${url}')" title="${file.name}">
+          </div>
+        `;
+      });
+    }
+
+async function saveFullRecord() {
+  // 防呆：空白病歷不能儲存
+  if (!currentCatId) {
+    alert('❌ 請先綁定就診動物！');
+    return;
+  }
+
+  const visitDate = document.getElementById('visitDate').value;
+  const content = document.getElementById('visitContent').value.trim();
+
+  if (!visitDate) {
+    alert('❌ 請選擇就診日期！');
+    return;
+  }
+
+  if (!content) {
+    alert('❌ 請填寫症狀/看診內容！');
+    return;
+  }
+
+  if (!confirm('確定要儲存這筆正式病歷嗎？')) return;
+
+  const data = {
+    catId: currentCatId,
+    visitDate: visitDate,
+    reVisitDate: document.getElementById('reVisitDate').value,
+    surgeryDate: document.getElementById('surgeryDate').value,
+    weight: document.getElementById('nowWeight').value,
+    content: content,
+    drugs: drugList,
+    createTime: new Date().toISOString(),
+    updateTime: new Date().toISOString()
+  };
+
+  try {
+    await addDoc(collection(db, 'records'), data);
+    alert('✅ 病歷儲存成功！');
+    
+    drugList = [];
+    showDrugList();
+    document.getElementById('visitContent').value = '';
+    document.getElementById('nowWeight').value = '';
+    document.getElementById('examPhotoPreview').innerHTML = '';
+    document.getElementById('treatPhotoPreview').innerHTML = '';
+    examFiles = [];
+    treatFiles = [];
+    
+    document.querySelectorAll('.symptom-tag').forEach(tag => {
+      tag.classList.remove('active');
+    });
+  } catch (e) {
+    alert('❌ 儲存失敗：' + e.message);
+  }
+}
+   
+
+}
+
+// 編輯病歷
+async function editRecord(id) {
+  if(!confirm('確定要編輯這筆病歷嗎？')) return;
+  
+  const docRef = doc(db, 'records', id);
+  const snap = await getDoc(docRef);
+  if(!snap.exists()) return alert('查無病歷資料');
+  const data = snap.data();
+
+  // 切換到病歷頁面
+  switchTab('record', document.querySelectorAll('.tab-btn')[1]);
+  
+  // 綁定動物
+  bindCat(data.catId, '');
+
+  // 填回表單
+  document.getElementById('visitDate').value = data.visitDate || '';
+  document.getElementById('reVisitDate').value = data.reVisitDate || '';
+  document.getElementById('surgeryDate').value = data.surgeryDate || '';
+  document.getElementById('nowWeight').value = data.weight || '';
+  document.getElementById('visitContent').value = data.content || '';
+
+  // 填回用藥
+  drugList = data.drugs || [];
+  showDrugList();
+
+  alert('✅ 病歷已載入，可直接編輯\n\n請注意：儲存會產生新病歷，舊病歷不會自動覆蓋');
+}
+
+// 刪除病歷
+async function deleteRecord(id) {
+  if(!confirm('⚠️ 確定要刪除這筆病歷嗎？\n此動作無法復原！')) return;
+  
+  try {
+    await deleteDoc(doc(db, 'records', id));
+    alert('✅ 病歷刪除成功');
+    searchHistoryRecord(); // 重新整理清單
+  } catch(e) {
+    alert('❌ 刪除失敗：' + e.message);
+  }
+}
+
+    async function viewRecordDetail(id){
+      const docRef = doc(db,'records',id);
+      const snap = await getDoc(docRef);
+      if(!snap.exists()) return alert('查無病歷');
+      const data = snap.data();
+      let content = `
+        就診日期：${data.visitDate}
+        回診日期：${data.reVisitDate || '無'}
+        體重：${data.weight || '未填寫'}
+        症狀：${data.content || '無'}
+        
+        用藥紀錄：
+      `;
+      data.drugs.forEach((d,i)=>{
+        content += `\n${i+1}. ${d.name} - ${d.dose}`;
+      });
+      alert(content);
+    }
+
+    async function loadWeightChart() {
+      const kw = document.getElementById('searchWeightCat').value.toLowerCase();
+      if (!kw) {
+        if (weightChart) weightChart.destroy();
+        return;
+      }
+
+      const catSnap = await getDocs(collection(db, 'cats'));
+      const cat = catSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .find(item => item.name && item.name.toLowerCase().includes(kw));
+
+      if (!cat) return;
+
+      const recSnap = await getDocs(query(collection(db, 'records'), where('catId', '==', cat.id)));
+      const records = recSnap.docs.map(d => d.data())
+        .filter(item => item.weight && item.visitDate)
+        .sort((a, b) => new Date(a.visitDate) - new Date(b.visitDate));
+
+      const ctx = document.getElementById('weightChartCanvas').getContext('2d');
+      if (weightChart) weightChart.destroy();
+
+      weightChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: records.map(item => item.visitDate),
+          datasets: [{
+            label: `${cat.name} 的體重變化 (kg)`,
+            data: records.map(item => item.weight),
+            borderColor: '#2c5aa0',
+            backgroundColor: 'rgba(44, 90, 160, 0.1)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: { display: true, text: `${cat.name} 的體重追蹤曲線`, font: { size: 16 } },
+            tooltip: { mode: 'index', intersect: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              title: { display: true, text: '體重 (kg)' }
+            },
+            x: {
+              title: { display: true, text: '日期' }
+            }
+          }
+        }
+      });
+    }
+
+    function toggleFavorite(id, name) {
+      let fav = JSON.parse(localStorage.getItem('favorites') || '[]');
+      const index = fav.findIndex(item => item.id === id);
+
+      if (index > -1) {
+        fav.splice(index, 1);
+        alert(`已將 ${name} 移除我的最愛`);
+      } else {
+        fav.push({ id, name });
+        alert(`已將 ${name} 加入我的最愛`);
+      }
+
+      localStorage.setItem('favorites', JSON.stringify(fav));
+      loadFavoriteList();
+    }
+
+    async function loadFavoriteList(){
+      let fav = JSON.parse(localStorage.getItem('favorites') || '[]');
+      const tbody = document.querySelector('#favoriteListShow tbody');
+      if(fav.length === 0){
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">尚無常用動物</td></tr>';
+        return;
+      }
+
+      const snap = await getDocs(collection(db,'cats'));
+      const catMap = {};
+      snap.docs.forEach(d=>catMap[d.id] = d.data());
+      
+      tbody.innerHTML = fav.map(item=>{
+        const cat = catMap[item.id];
+        if(!cat) return '';
+        return `
+          <tr class="highlight" onclick="bindCat('${item.id}','${cat.name}')">
+            <td>${cat.name}</td>
+            <td>${cat.chip || '-'}</td>
+            <td>${cat.owner || '-'}</td>
+            <td>${cat.phone || '-'}</td>
+            <td>${localStorage.getItem('lastVisit_'+item.id) || '無'}</td>
+            <td>
+              <button class="btn btn-primary" onclick="bindCat('${item.id}','${cat.name}')">📝 建立病歷</button>
+              <button class="btn btn-outline" onclick="toggleFavorite('${item.id}','${cat.name}')">🗑️ 移除</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function adminLogin() {
+      const acc = document.getElementById('adminAcc').value;
+      const pwd = document.getElementById('adminPwd').value;
+
+      if (acc === '2015starmos' && pwd === 'ha821208') {
+        alert('✅ 管理員登入成功，進入管理模式');
+      } else {
+        alert('❌ 帳號或密碼錯誤，請重新輸入');
+      }
+    }
+
+    window.onload = function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('visitDate').value = today;
+      showDrugList();
+      loadFavoriteList();
+    };
+  </script>
+</body>
+</html>
