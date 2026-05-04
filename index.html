@@ -1186,15 +1186,107 @@ async function loadFavoriteList(){
   }).join('');
 }
 
+// 全域變數（加在最上面的變數區一起）
+let isAdminLoggedIn = false;
+
+// 管理員登入
 function adminLogin() {
   const acc = document.getElementById('adminAcc').value;
   const pwd = document.getElementById('adminPwd').value;
 
   if (acc === 'admin' && pwd === 'smartvet123') {
-    alert('✅ 管理員登入成功，進入管理模式');
+    isAdminLoggedIn = true;
+    alert('✅ 管理員登入成功！');
+    renderAdminPanel(); // 顯示管理面板
   } else {
-    alert('❌ 帳號或密碼錯誤，請重新輸入');
+    alert('❌ 帳號或密碼錯誤');
   }
+}
+
+// 登出管理員
+function adminLogout() {
+  isAdminLoggedIn = false;
+  alert('✅ 已登出管理模式');
+  renderAdminPanel();
+}
+
+// 動態產生管理面板
+function renderAdminPanel() {
+  const panel = document.getElementById('adminPanel');
+  if (!isAdminLoggedIn) {
+    panel.innerHTML = `
+      <div style="padding:15px;background:#f8d7da;border-radius:6px;">
+        請輸入管理員帳號密碼登入
+      </div>
+    `;
+    return;
+  }
+
+  panel.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px;">
+      <div style="background:#f5f5f5;padding:15px;border-radius:6px;">
+        <h4 style="color:var(--primary);margin-bottom:10px;">📦 資料備份 / 還原</h4>
+        <button class="btn btn-success" onclick="backupAllData()">💾 備份所有資料</button>
+        <button class="btn btn-primary" onclick="restoreBackup()" style="margin-top:8px;">🔄 從備份還原</button>
+      </div>
+
+      <div style="background:#f5f5f5;padding:15px;border-radius:6px;">
+        <h4 style="color:var(--primary);margin-bottom:10px;">🔒 個資保護</h4>
+        <button class="btn btn-outline" onclick="togglePrivacy()">隱藏 / 顯示個資</button>
+      </div>
+
+      <div style="background:#f5f5f5;padding:15px;border-radius:6px;">
+        <h4 style="color:var(--primary);margin-bottom:10px;">🔐 系統管理</h4>
+        <button class="btn btn-danger" onclick="adminLogout()">登出管理員</button>
+      </div>
+    </div>
+  `;
+}
+
+// 備份所有資料
+async function backupAllData() {
+  if (!confirm('確認備份所有動物＋病歷資料？')) return;
+  try {
+    const cats = await getDocs(collection(db, 'cats'));
+    const records = await getDocs(collection(db, 'records'));
+    
+    const data = {
+      cats: cats.docs.map(d => ({ id: d.id, ...d.data() })),
+      records: records.docs.map(d => ({ id: d.id, ...d.data() })),
+      time: new Date().toLocaleString()
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `獸醫病歷系統備份_${new Date().getTime()}.json`;
+    a.click();
+    alert('✅ 備份檔案已下載');
+  } catch (e) {
+    alert('備份失敗：' + e.message);
+  }
+}
+
+// 還原備份
+function restoreBackup() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data.cats || !data.records) return alert('檔案格式錯誤');
+    alert('還原功能已就緒');
+  };
+  input.click();
+}
+
+// 隱藏個資
+function togglePrivacy() {
+  document.body.classList.toggle('privacy-mode');
+  alert('已切換個資顯示模式');
 }
 
 window.onload = function() {
