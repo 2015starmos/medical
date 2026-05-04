@@ -144,6 +144,26 @@
     .modal-content{max-width:90%;max-height:85vh;}
     .modal-img{max-width:100%;max-height:85vh;border-radius:6px;border:3px solid var(--white);}
 
+    /* 拖曳上傳區域樣式 */
+    .drop-area {
+      border: 2px dashed #2c5aa0;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+      margin: 10px 0;
+      cursor: pointer;
+      transition: 0.3s;
+      background: #f8f9ff;
+    }
+    .drop-area:hover {
+      background: #e6f0ff;
+      border-color: #1a3d7a;
+    }
+    .drop-area.active {
+      background: #d4e6ff;
+      border-color: var(--primary);
+    }
+
     @media (max-width:768px){
       .tab-header{flex-wrap:wrap;}
       .tab-btn{flex:1 1 auto;text-align:center;padding:8px 5px;}
@@ -425,10 +445,13 @@
                   <option value="眼鼻症狀">眼鼻症狀</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label>選擇檔案 (支援圖片/PDF)</label>
-                <input type="file" multiple accept="image/*,.pdf" id="uploadExamFile" onchange="previewExamFiles()">
+
+              <!-- 拖曳上傳區域 -->
+              <div class="drop-area" id="examDropArea">
+                📂 點選或拖曳圖片 / PDF 到這裡上傳
+                <input type="file" multiple accept="image/*,.pdf" id="uploadExamFile" style="display:none;">
               </div>
+
               <div class="photo-grid" id="examPhotoPreview"></div>
             </div>
           </div>
@@ -438,10 +461,12 @@
               <span>治療紀錄照片</span>
             </div>
             <div class="section-body">
-              <div class="form-group">
-                <label>選擇照片檔案</label>
-                <input type="file" multiple accept="image/*" id="uploadTreatFile" onchange="previewTreatFiles()">
+              <!-- 拖曳上傳區域 -->
+              <div class="drop-area" id="treatDropArea">
+                🖼️ 點選或拖曳照片到這裡上傳
+                <input type="file" multiple accept="image/*" id="uploadTreatFile" style="display:none;">
               </div>
+
               <div class="photo-grid" id="treatPhotoPreview"></div>
             </div>
           </div>
@@ -618,6 +643,59 @@ let nowImgList = [];
 let nowImgIndex = 0;
 let remindList = [];
 let currentRecordId = "";
+
+// 初始化拖曳上傳
+function initDropAreas() {
+  // 檢驗報告上傳區
+  const examArea = document.getElementById('examDropArea');
+  const examInput = document.getElementById('uploadExamFile');
+  examArea.addEventListener('click', () => examInput.click());
+  setupDragDrop(examArea, examInput, handleExamFiles);
+
+  // 治療紀錄上傳區
+  const treatArea = document.getElementById('treatDropArea');
+  const treatInput = document.getElementById('uploadTreatFile');
+  treatArea.addEventListener('click', () => treatInput.click());
+  setupDragDrop(treatArea, treatInput, handleTreatFiles);
+}
+
+// 拖曳事件通用設定
+function setupDragDrop(dropArea, fileInput, callback) {
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, e => e.preventDefault());
+  });
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, () => dropArea.classList.add('active'));
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, () => dropArea.classList.remove('active'));
+  });
+
+  dropArea.addEventListener('drop', e => {
+    const files = Array.from(e.dataTransfer.files);
+    callback(files);
+  });
+
+  fileInput.addEventListener('change', () => {
+    const files = Array.from(fileInput.files);
+    callback(files);
+    fileInput.value = '';
+  });
+}
+
+// 檢驗檔案：新增不覆蓋
+function handleExamFiles(newFiles) {
+  examFiles = [...examFiles, ...newFiles];
+  previewExamFiles();
+}
+
+// 治療照片：新增不覆蓋
+function handleTreatFiles(newFiles) {
+  treatFiles = [...treatFiles, ...newFiles];
+  previewTreatFiles();
+}
 
 function generateRecordId() {
   const date = new Date();
@@ -873,7 +951,6 @@ async function saveFullRecord() {
   if (!visitDate || !content) return alert('❌ 請完整填寫就診日期與內容');
 
   try {
-    // 修正點：確保上傳完成後才執行後續寫入動作
     const examUrls = await uploadFiles(examFiles, `exam/${currentCatId}`);
     const treatUrls = await uploadFiles(treatFiles, `treat/${currentCatId}`);
 
@@ -977,17 +1054,27 @@ window.showWeightForCat = async function(catId) {
   });
 }
 
+// 預覽檢驗檔案
 function previewExamFiles() {
-  examFiles = Array.from(document.getElementById('uploadExamFile').files);
   const preview = document.getElementById('examPhotoPreview');
-  preview.innerHTML = examFiles.map((f, i) => `<div class="photo-item"><img src="${URL.createObjectURL(f)}" onclick="openImgModal(this.src)"><button onclick="deleteExamPhoto(${i})" style="position:absolute;top:0;right:0;background:red;color:white;">✕</button></div>`).join('');
+  preview.innerHTML = examFiles.map((f, i) => `
+    <div class="photo-item">
+      <img src="${URL.createObjectURL(f)}" onclick="openImgModal(this.src)">
+      <button onclick="deleteExamPhoto(${i})" style="position:absolute;top:0;right:0;background:red;color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;">✕</button>
+    </div>
+  `).join('');
 }
 function deleteExamPhoto(i) { examFiles.splice(i,1); previewExamFiles(); }
 
+// 預覽治療照片
 function previewTreatFiles() {
-  treatFiles = Array.from(document.getElementById('uploadTreatFile').files);
   const preview = document.getElementById('treatPhotoPreview');
-  preview.innerHTML = treatFiles.map((f, i) => `<div class="photo-item"><img src="${URL.createObjectURL(f)}" onclick="openImgModal(this.src)"><button onclick="deleteTreatPhoto(${i})" style="position:absolute;top:0;right:0;background:red;color:white;">✕</button></div>`).join('');
+  preview.innerHTML = treatFiles.map((f, i) => `
+    <div class="photo-item">
+      <img src="${URL.createObjectURL(f)}" onclick="openImgModal(this.src)">
+      <button onclick="deleteTreatPhoto(${i})" style="position:absolute;top:0;right:0;background:red;color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;">✕</button>
+    </div>
+  `).join('');
 }
 function deleteTreatPhoto(i) { treatFiles.splice(i,1); previewTreatFiles(); }
 
@@ -1002,6 +1089,7 @@ async function loadRemindList() {
 window.onload = function() {
   document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
   showRecordIdBar();
+  initDropAreas();
 };
 </script>
 </body>
