@@ -282,10 +282,12 @@
 <div id="record" class="page">
   <div class="section">
     <div class="section-header">
-    <div id="recordIdBar"></div>
-      <span>綁定就診動物</span>
+      <span>病歷資訊</span>
     </div>
     <div class="section-body">
+      <!-- 自動產生的病歷ID 顯示在最上方 -->
+      <div id="recordIdBar" style="margin-bottom:12px;"></div>
+
       <div class="form-group">
         <label>搜尋動物</label>
         <input type="text" id="searchRecordCat" placeholder="輸入動物姓名/晶片號搜尋" oninput="searchCatForRecord()">
@@ -662,6 +664,12 @@ function switchTab(id, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
+
+  // 切換到建立病歷分頁時 自動產生ID
+  if(id === 'record' && !currentRecordId){
+    currentRecordId = generateRecordId();
+    showRecordIdBar();
+  }
 }
 
 function addSymptom(el) {
@@ -798,18 +806,11 @@ function bindCat(id, name){
     ✅ 已綁定動物：<strong>${name}</strong>
     <button class="btn btn-danger" onclick="unbindCat()" style="margin-left:10px;">❌ 取消綁定</button>
   `;
-
-  if(!currentRecordId){
-    currentRecordId = generateRecordId();
-    showRecordIdBar();
-  }
 }
 
 // 取消綁定
 function unbindCat(){
   currentCatId = null;
-  currentRecordId = "";
-  showRecordIdBar();
   document.getElementById('bindCatInfo').innerHTML = '尚未綁定動物，請先搜尋並選擇欲建立病歷的動物';
 }
 
@@ -970,9 +971,6 @@ async function saveDraftRecord() {
   }
   if (!confirm('確定要儲存草稿嗎？')) return;
 
-  if(!currentRecordId) currentRecordId = generateRecordId();
-  showRecordIdBar();
-
   const data = {
     recordId: currentRecordId,
     catId: currentCatId,
@@ -993,6 +991,10 @@ async function saveDraftRecord() {
   try {
     await addDoc(collection(db, 'records'), data);
     alert('✅ 草稿儲存成功！病歷編號：' + currentRecordId);
+    
+    // 儲存完成後 重新產生新的病歷ID
+    currentRecordId = generateRecordId();
+    showRecordIdBar();
   } catch (e) {
     alert('❌ 草稿儲存失敗：' + e.message);
   }
@@ -1018,8 +1020,6 @@ async function saveFullRecord() {
   }
 
   if (!confirm('確定儲存病歷？編輯模式會直接覆蓋舊資料')) return;
-  if(!currentRecordId) currentRecordId = generateRecordId();
-  showRecordIdBar();
 
   const examUrls = await uploadFiles(examFiles, `exam/${currentCatId}`);
   const treatUrls = await uploadFiles(treatFiles, `treat/${currentCatId}`);
@@ -1053,7 +1053,7 @@ async function saveFullRecord() {
       alert('✅ 新病歷儲存成功！編號：' + currentRecordId);
     }
     
-    // 清空表單
+    // 清空表單 + 產生新ID
     drugList = [];
     showDrugList();
     document.getElementById('visitContent').value = '';
@@ -1064,8 +1064,11 @@ async function saveFullRecord() {
     treatFiles = [];
     
     document.querySelectorAll('.symptom-tag').forEach(tag => tag.classList.remove('active'));
-    currentRecordId = "";
+    
+    // 重新產生新病歷號
+    currentRecordId = generateRecordId();
     showRecordIdBar();
+
     loadRemindList();
   } catch (e) {
     alert('❌ 儲存失敗：' + e.message);
@@ -1226,7 +1229,7 @@ async function loadWeightChart() {
   const catList = catSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   const matchedCats = catList.filter(item => 
     (item.name && item.name.toLowerCase().includes(kw)) ||
-    (i.chip && i.chip.includes(kw))
+    (item.chip && item.chip.includes(kw))
   );
 
   if (matchedCats.length === 0) {
