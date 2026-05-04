@@ -229,7 +229,7 @@
                   <input type="text" id="ownerPhone" placeholder="請輸入飼主手機">
                 </div>
                 <div class="form-group">
-                  <label>緊急聯繫電話</label>
+                  <label>緊急聯絡電話</label>
                   <input type="text" id="ownerPhone2" placeholder="請輸入備用電話">
                 </div>
                 <div class="form-group">
@@ -266,7 +266,7 @@
                       <th>晶片號</th>
                       <th>性別/結紮</th>
                       <th>飼主</th>
-                      <th>聯繫電話</th>
+                      <th>聯絡電話</th>
                       <th>操作</th>
                     </tr>
                   </thead>
@@ -585,7 +585,7 @@ import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, w
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB2yEi76WZfALxNkInhG5oG5oG_0LMlNqDgH0",
+  apiKey: "AIzaSyB2yEi76WZfALxNkInhG5oG_0LMlNqDgH0",
   authDomain: "nibo-medical.firebaseapp.com",
   projectId: "nibo-medical",
   storageBucket: "nibo-medical.firebasestorage.app",
@@ -687,7 +687,7 @@ async function saveCatData() {
 
   if (!data.name) return alert('請輸入動物姓名');
   if (!data.owner) return alert('請輸入飼主姓名');
-  if (!data.phone) return alert('請輸入飼主聯繫電話');
+  if (!data.phone) return alert('請輸入飼主聯絡電話');
 
   try {
     if (id) {
@@ -1200,14 +1200,14 @@ async function loadWeightChart() {
   );
 
   if (matchedCats.length === 0) {
-    if (resultArea) resultArea.innerHTML = '<div style="padding:10px;">未找到任何猫咪</div>';
+    if (resultArea) resultArea.innerHTML = '<div style="padding:10px;">未找到任何貓咪</div>';
     if (weightChart) weightChart.destroy();
     return;
   }
 
   let html = `
     <div style="margin:15px 0; padding:10px; border:1px solid #ddd; border-radius:6px;">
-      <div style="margin-bottom:8px; font-weight:bold; color:#2c5aa0;">✅ 找到以下猫咪，请点击查看体重：</div>
+      <div style="margin-bottom:8px; font-weight:bold; color:#2c5aa0;">✅ 找到以下貓咪，請點擊查看體重：</div>
   `;
 
   matchedCats.forEach(cat => {
@@ -1215,7 +1215,7 @@ async function loadWeightChart() {
       <button 
         onclick="showWeightForCat('${cat.id}')"
         style="padding:8px 12px; margin:5px; border-radius:6px; border:none; background:#2c5aa0; color:white; cursor:pointer;">
-        ${cat.name} (${cat.owner || '无饲主'})
+        ${cat.name} (${cat.owner || '無飼主'})
       </button>
     `;
   });
@@ -1244,7 +1244,7 @@ window.showWeightForCat = async function(catId) {
     data: {
       labels: records.map(item => item.visitDate),
       datasets: [{
-        label: `${cat.name} 的体重变化 (kg)`,
+        label: `${cat.name} 的體重變化 (kg)`,
         data: records.map(item => item.weight),
         borderColor: '#2c5aa0',
         backgroundColor: 'rgba(44, 90, 160, 0.1)',
@@ -1256,11 +1256,11 @@ window.showWeightForCat = async function(catId) {
     options: {
       responsive: true,
       plugins: {
-        title: { display: true, text: `${cat.name} 体重追踪曲线图`, font: { size: 16 } },
+        title: { display: true, text: `${cat.name} 體重追蹤曲線圖`, font: { size: 16 } },
         tooltip: { mode: 'index', intersect: false }
       },
       scales: {
-        y: { beginAtZero: false, title: { display: true, text: '体重 (kg)' } },
+        y: { beginAtZero: false, title: { display: true, text: '體重 (kg)' } },
         x: { title: { display: true, text: '日期' } }
       }
     }
