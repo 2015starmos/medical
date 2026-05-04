@@ -1129,30 +1129,48 @@ async function deleteRecord(id) {
 async function searchHistoryRecord() {
   const start = document.getElementById('filterStart').value;
   const end = document.getElementById('filterEnd').value;
-  let key = document.getElementById('filterKey').value.trim();
+  let key = document.getElementById('filterKey').value.trim().toLowerCase();
 
+  // 1. 取得所有病歷
   const recordSnap = await getDocs(collection(db, 'records'));
   let allRecords = recordSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
+  // 2. 取得所有寵物，並建立「寵物ID → 完整資料」對應表
   const catSnap = await getDocs(collection(db, 'cats'));
   const catMap = {};
   catSnap.docs.forEach(doc => {
     const c = doc.data();
-    catMap[doc.id] = { name: c.name || '' };
+    catMap[doc.id] = {
+      name: (c.name || '').toLowerCase(),
+      chip: (c.chip || '').toLowerCase(),
+      owner: (c.owner || '').toLowerCase(),
+      phone: (c.phone || '').toLowerCase(),
+      ownerId: (c.ownerId || '').toLowerCase(),
+      addr: (c.addr || '').toLowerCase()
+    };
   });
 
+  // 3. 日期篩選
   if (start) allRecords = allRecords.filter(r => r.visitDate >= start);
   if (end) allRecords = allRecords.filter(r => r.visitDate <= end);
 
+  // 4. 關鍵字搜尋（貓名 / 晶片 / 飼主 / 手機 / 身分證 / 地址）
   if (key) {
-    const kw = key.toLowerCase();
     allRecords = allRecords.filter(record => {
       const cat = catMap[record.catId];
       if (!cat) return false;
-      return cat.name.toLowerCase().includes(kw);
+      return (
+        cat.name.includes(key) ||
+        cat.chip.includes(key) ||
+        cat.owner.includes(key) ||
+        cat.phone.includes(key) ||
+        cat.ownerId.includes(key) ||
+        cat.addr.includes(key)
+      );
     });
   }
 
+  // 5. 渲染表格
   const tbody = document.getElementById('historyTableBody');
   if (allRecords.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">無符合條件的病歷紀錄</td></tr>';
