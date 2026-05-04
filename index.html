@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>獸醫電子病歷系統</title>
+  <title>獸醫電子病歷系統 - 專業版</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root{
@@ -50,7 +50,7 @@
     .tab-header{display:flex;border-bottom:1px solid var(--gray);background:var(--gray-light);}
     .tab-btn{
       padding:10px 20px;border:none;background:transparent;cursor:pointer;
-      font-size:13px;font-weight:50;border-right:1px solid var(--gray);
+      font-size:13px;font-weight:500;border-right:1px solid var(--gray);
       transition:0.2s;
     }
     .tab-btn:hover{background:rgba(44,90,160,0.1);}
@@ -87,13 +87,10 @@
       vertical-align:middle;
     }
     .data-table tr:hover{background:rgba(44,90,160,0.05);}
-    .data-table .highlight{background:#fff3cd;}
-    .data-table .warning{background:#f8d7da;color:var(--danger);font-weight:bold;}
-    .data-table .success{background:#d4edda;color:var(--success);}
 
     .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0;}
     .form-group{margin:8px 0;}
-    .form-group label{display:block;margin-bottom:4px;font-weight:50;color:var(--primary);}
+    .form-group label{display:block;margin-bottom:4px;font-weight:bold;color:var(--primary);}
     input,select,textarea{
       width:100%;padding:7px 10px;border:1px solid var(--gray);
       border-radius:4px;font-size:13px;transition:0.2s;
@@ -101,32 +98,24 @@
     input:focus,select:focus,textarea:focus{
       outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(44,90,160,0.2);
     }
-    textarea{resize:vertical;min-height:80px;}
 
     .btn{
       padding:7px 15px;border-radius:4px;border:none;cursor:pointer;
-      font-size:12px;font-weight:50;transition:0.2s;
+      font-size:12px;font-weight:bold;transition:0.2s;
       display:inline-flex;align-items:center;gap:5px;
     }
     .btn-primary{background:var(--primary);color:var(--white);}
-    .btn-primary:hover{background:#1a3d7a;}
     .btn-success{background:var(--success);color:var(--white);}
-    .btn-success:hover{background:#27ae60;}
     .btn-danger{background:var(--danger);color:var(--white);}
-    .btn-danger:hover{background:#c0392b;}
     .btn-warning{background:var(--warning);color:var(--white);}
-    .btn-warning:hover{background:#e67e22;}
     .btn-outline{background:transparent;border:1px solid var(--primary);color:var(--primary);}
-    .btn-outline:hover{background:var(--primary);color:var(--white);}
 
     .symptom-tags{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;}
     .symptom-tag{
       padding:5px 12px;background:var(--gray-light);border-radius:20px;
       font-size:12px;cursor:pointer;border:1px solid var(--gray);
     }
-    .symptom-tag.active{
-      background:var(--primary);color:var(--white);border-color:var(--primary);
-    }
+    .symptom-tag.active{background:var(--primary);color:var(--white);}
 
     .photo-grid{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;}
     .photo-item{
@@ -144,18 +133,7 @@
     .modal-content{max-width:90%;max-height:85vh;}
     .modal-img{max-width:100%;max-height:85vh;border-radius:6px;border:3px solid var(--white);}
 
-    @media (max-width:768px){
-      .tab-header{flex-wrap:wrap;}
-      .tab-btn{flex:1 1 auto;text-align:center;padding:8px 5px;}
-      .form-grid{grid-template-columns:1fr;}
-      .data-table{font-size:12px;}
-      .data-table th,.data-table td{padding:5px 3px;}
-    }
-
-    @keyframes fadeIn {
-      from {opacity:0;}
-      to {opacity:1;}
-    }
+    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
   </style>
 </head>
 <body>
@@ -165,8 +143,8 @@
       <h1>獸醫電子病歷系統</h1>
     </div>
     <div class="nav-menu">
-      <a href="#" class="active">🖥️系統首頁</a>
-      <button class="tab-btn" id="adminTabBtn" onclick="switchTab('admin',this)" style="display:none;">管理</button>
+      <a href="#" class="active">🖥️ 系統首頁</a>
+      <button class="tab-btn" id="adminTabBtn" onclick="switchTab('admin',this)" style="display:none; color:white;">⚙️ 管理員</button>
     </div>
   </div>
 
@@ -177,10 +155,11 @@
         <button class="tab-btn" onclick="switchTab('record',this)">📝 建立病歷紀錄</button>
         <button class="tab-btn" onclick="switchTab('history',this)">🔍 病歷查詢</button>
         <button class="tab-btn" onclick="switchTab('weight',this)">📊 體重追蹤</button>
-        <button class="tab-btn" onclick="switchTab('remind',this)">⚠️ 疫苗/回診提醒</button>
+        <button class="tab-btn" onclick="switchTab('remind',this)">⚠️ 到期提醒</button>
       </div>
 
       <div class="tab-content">
+        <!-- 動物資料分頁 -->
         <div id="cat" class="page active">
           <div class="section">
             <div class="section-header">
@@ -190,1239 +169,485 @@
             <div class="section-body">
               <input type="hidden" id="editCatId">
               <div class="form-grid">
-                <div class="form-group">
-                  <label>動物姓名</label>
-                  <input type="text" id="catName" placeholder="請輸入動物姓名">
-                </div>
-                <div class="form-group">
-                  <label>晶片號碼</label>
-                  <input type="text" id="chipId" placeholder="請輸入晶片號碼">
-                </div>
+                <div class="form-group"><label>動物姓名</label><input type="text" id="catName"></div>
+                <div class="form-group"><label>晶片號碼</label><input type="text" id="chipId"></div>
                 <div class="form-group">
                   <label>性別</label>
-                  <select id="catGender">
-                    <option value="公">公</option>
-                    <option value="母">母</option>
-                  </select>
+                  <select id="catGender"><option value="公">公</option><option value="母">母</option></select>
                 </div>
-                <div class="form-group">
-                  <label>品種</label>
-                  <input type="text" id="catBreed" placeholder="請輸入動物品種">
-                </div>
-                <div class="form-group">
-                  <label>出生日期</label>
-                  <input type="date" id="catBirth">
-                </div>
+                <div class="form-group"><label>品種</label><input type="text" id="catBreed"></div>
+                <div class="form-group"><label>出生日期</label><input type="date" id="catBirth"></div>
                 <div class="form-group">
                   <label>結紮狀態</label>
-                  <select id="catNeuter">
-                    <option value="未結紮">未結紮</option>
-                    <option value="已結紮">已結紮</option>
-                  </select>
+                  <select id="catNeuter"><option value="未結紮">未結紮</option><option value="已結紮">已結紮</option></select>
                 </div>
-                <div class="form-group">
-                  <label>飼主姓名</label>
-                  <input type="text" id="ownerName" placeholder="請輸入飼主姓名">
-                </div>
-                <div class="form-group">
-                  <label>飼主手機</label>
-                  <input type="text" id="ownerPhone" placeholder="請輸入飼主手機">
-                </div>
-                <div class="form-group">
-                  <label>緊急聯絡電話</label>
-                  <input type="text" id="ownerPhone2" placeholder="請輸入備用電話">
-                </div>
-                <div class="form-group">
-                  <label>飼主身分證</label>
-                  <input type="text" id="ownerId" placeholder="請輸入身分證字號">
-                </div>
-                <div class="form-group">
-                  <label>居住地址</label>
-                  <input type="text" id="ownerAddr" placeholder="請輸入居住地址">
-                </div>
+                <div class="form-group"><label>飼主姓名</label><input type="text" id="ownerName"></div>
+                <div class="form-group"><label>飼主手機</label><input type="text" id="ownerPhone"></div>
+                <div class="form-group"><label>備用電話</label><input type="text" id="ownerPhone2"></div>
+                <div class="form-group"><label>飼主身分證</label><input type="text" id="ownerId"></div>
+                <div class="form-group"><label>居住地址</label><input type="text" id="ownerAddr"></div>
               </div>
               <div class="form-group">
                 <label>備註資訊</label>
-                <textarea id="catNote" placeholder="個性、藥物過敏、先天病史、照護注意事項等"></textarea>
+                <textarea id="catNote" placeholder="過敏、病史等"></textarea>
               </div>
-              <button class="btn btn-primary" onclick="saveCatData()">💾 儲存資料</button>
+              <button class="btn btn-primary" onclick="saveCatData()">💾 儲存基本資料</button>
             </div>
           </div>
-
           <div class="section">
-            <div class="section-header">
-              <span>動物資料查詢（姓名/飼主/手機/晶片號）</span>
-            </div>
+            <div class="section-header"><span>快速搜尋動物</span></div>
             <div class="section-body">
-              <div class="form-group">
-                <label>搜尋關鍵字</label>
-                <input type="text" id="searchCatInput" placeholder="輸入關鍵字立即搜尋" oninput="searchCatAll()">
-              </div>
-              <div id="catSearchResult">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>動物姓名</th>
-                      <th>晶片號</th>
-                      <th>性別/結紮</th>
-                      <th>飼主</th>
-                      <th>聯絡電話</th>
-                      <th>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody id="catTableBody">
-                    <tr><td colspan="6" style="text-align:center;">請輸入關鍵字搜尋動物資料</td></tr>
-                  </tbody>
-                </table>
-              </div>
+              <input type="text" id="searchCatInput" placeholder="輸入關鍵字立即搜尋" oninput="searchCatAll()">
+              <table class="data-table">
+                <thead>
+                  <tr><th>姓名</th><th>晶片</th><th>性別</th><th>飼主</th><th>電話</th><th>操作</th></tr>
+                </thead>
+                <tbody id="catTableBody"></tbody>
+              </table>
             </div>
           </div>
         </div>
 
-<div id="record" class="page">
-  <div class="section">
-    <div class="section-header">
-    <div id="recordIdBar"></div>
-      <span>綁定就診動物</span>
-    </div>
-    <div class="section-body">
-      <div class="form-group">
-        <label>搜尋動物</label>
-        <input type="text" id="searchRecordCat" placeholder="輸入動物姓名/晶片號搜尋" oninput="searchCatForRecord()">
-      </div>
-      <div id="bindCatInfo" style="margin:10px 0;padding:10px;border:1px dashed var(--gray);border-radius:4px;">
-        尚未綁定動物，請先搜尋並選擇欲建立病歷的動物
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-header">
-      <span>就診基本資訊</span>
-    </div>
-    <div class="section-body">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>就診日期</label>
-          <input type="date" id="visitDate">
-        </div>
-        <div class="form-group">
-          <label>回診日期</label>
-          <input type="date" id="reVisitDate">
-        </div>
-        <div class="form-group">
-          <label>手術日期</label>
-          <input type="date" id="surgeryDate">
-        </div>
-        <div class="form-group">
-          <label>本次體重 (kg)</label>
-          <input type="number" id="nowWeight" step="0.01" placeholder="輸入體重">
-        </div>
-      </div>
-
-      <div style="margin-top:12px; padding:10px; border-left:4px solid #4CAF50; background:#f9f9f9; border-radius:4px;">
-        <h4 style="margin:0 0 8px 0; color:#2c6e2f;">💊 驅蟲紀錄</h4>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>使用的驅蟲藥</label>
-            <input type="text" id="dewormMedicine" placeholder="例如：愛滴、諾飛滴、大觀園">
-          </div>
-          <div class="form-group">
-            <label>驅蟲執行時間</label>
-            <input type="datetime-local" id="dewormTime">
-          </div>
-          <div class="form-group">
-            <label>下次驅蟲提醒日期</label>
-            <input type="date" id="dewormRemindDate">
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group" style="margin-top:12px;">
-        <label>症狀描述/看診內容</label>
-        <textarea id="visitContent" placeholder="詳細描述症狀、檢查結果、診斷內容等"></textarea>
-      </div>
-      <div>
-        <label style="display:block;margin:10px 0 5px 0;">快速選擇症狀：</label>
-        <div class="symptom-tags">
-          <span class="symptom-tag" onclick="addSymptom(this)">嘔吐</span>
-          <span class="symptom-tag" onclick="addSymptom(this)">腹瀉</span>
-          <span class="symptom-tag" onclick="addSymptom(this)">食慾差</span>
-          <span class="symptom-tag" onclick="addSymptom(this)">精神萎靡</span>
-          <span class="symptom-tag" onclick="addSymptom(this)">頻尿</span>
-          <span class="symptom-tag" onclick="addSymptom(this)">血尿</span>
-          <span class="symptom-tag" onclick="addSymptom(this)">皮膚病</span>
-          <span class="symptom-tag" onclick="addSymptom(this)">口炎</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
+        <!-- 建立病歷分頁 -->
+        <div id="record" class="page">
+          <div id="recordIdBar"></div>
           <div class="section">
-            <div class="section-header">
-              <span>用藥紀錄</span>
-              <button class="btn btn-success" onclick="addDrugItem()">➕ 新增用藥</button>
+            <div class="section-header"><span>1. 綁定就診動物</span></div>
+            <div class="section-body">
+              <input type="text" id="searchRecordCat" placeholder="搜尋姓名/晶片/飼主/電話" oninput="searchCatForRecord()">
+              <div id="bindCatInfo" style="margin-top:10px; padding:10px; border:1px dashed #ccc;">尚未綁定動物</div>
             </div>
+          </div>
+          <div class="section">
+            <div class="section-header"><span>2. 就診內容</span></div>
             <div class="section-body">
               <div class="form-grid">
-                <div class="form-group">
-                  <label>藥品名稱</label>
-                  <input type="text" id="drugName" placeholder="輸入藥品名稱">
-                </div>
-                <div class="form-group">
-                  <label>劑量</label>
-                  <input type="text" id="drugDose" placeholder="輸入用藥劑量">
-                </div>
-                <div class="form-group">
-                  <label>每日次數</label>
-                  <input type="text" id="drugTimes" placeholder="輸入每日服用次數">
-                </div>
-                <div class="form-group">
-                  <label>開始日期</label>
-                  <input type="date" id="drugStartDate">
-                </div>
-                <div class="form-group">
-                  <label>結束日期</label>
-                  <input type="date" id="drugEndDate">
-                </div>
-                <div class="form-group">
-                  <label>備註</label>
-                  <input type="text" id="drugRemark" placeholder="用藥注意事項">
+                <div class="form-group"><label>就診日期</label><input type="date" id="visitDate"></div>
+                <div class="form-group"><label>回診日期</label><input type="date" id="reVisitDate"></div>
+                <div class="form-group"><label>體重 (kg)</label><input type="number" id="nowWeight" step="0.01"></div>
+              </div>
+              <div class="form-group">
+                <label>症狀描述</label>
+                <textarea id="visitContent"></textarea>
+                <div class="symptom-tags">
+                  <span class="symptom-tag" onclick="addSymptom(this)">嘔吐</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">腹瀉</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">食慾差</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">精神萎靡</span>
                 </div>
               </div>
-              <div id="drugListShow" style="margin-top:15px;">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>藥品名稱</th>
-                      <th>劑量</th>
-                      <th>服用次數</th>
-                      <th>用藥期間</th>
-                      <th>備註</th>
-                      <th>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody id="drugTableBody">
-                    <tr><td colspan="6" style="text-align:center;">尚未新增用藥紀錄</td></tr>
-                  </tbody>
-                </table>
+              <div style="background:#e8f5e9; padding:10px; border-radius:4px; margin-top:10px;">
+                <h4 style="color:#2e7d32; margin-bottom:5px;">💊 驅蟲計畫</h4>
+                <div class="form-grid">
+                  <div class="form-group"><label>藥名</label><input type="text" id="dewormMedicine"></div>
+                  <div class="form-group"><label>下次提醒日期</label><input type="date" id="dewormRemindDate"></div>
+                </div>
               </div>
             </div>
           </div>
-
           <div class="section">
-            <div class="section-header">
-              <span>檢驗報告/影像檔案上傳</span>
-            </div>
+            <div class="section-header"><span>3. 用藥紀錄</span><button class="btn btn-success" onclick="addDrugItem()">+ 新增</button></div>
             <div class="section-body">
-              <div class="form-group">
-                <label>檔案類型</label>
-                <select id="photoType">
-                  <option value="檢驗報告">檢驗報告</option>
-                  <option value="術前照片">術前照片</option>
-                  <option value="術後照片">術後照片</option>
-                  <option value="皮膚病灶">皮膚病灶</option>
-                  <option value="眼鼻症狀">眼鼻症狀</option>
-                </select>
+              <div class="form-grid">
+                <input type="text" id="drugName" placeholder="藥名">
+                <input type="text" id="drugDose" placeholder="劑量">
+                <input type="text" id="drugTimes" placeholder="次數">
               </div>
-              <div class="form-group">
-                <label>選擇檔案 (支援圖片/PDF)</label>
-                <input type="file" multiple accept="image/*,.pdf" id="uploadExamFile" onchange="previewExamFiles()">
-              </div>
-              <div class="photo-grid" id="examPhotoPreview"></div>
+              <table class="data-table">
+                <thead><tr><th>藥名</th><th>劑量</th><th>次數</th><th>操作</th></tr></thead>
+                <tbody id="drugTableBody"></tbody>
+              </table>
             </div>
           </div>
-
-          <div class="section">
-            <div class="section-header">
-              <span>治療紀錄照片</span>
-            </div>
-            <div class="section-body">
-              <div class="form-group">
-                <label>選擇照片檔案</label>
-                <input type="file" multiple accept="image/*" id="uploadTreatFile" onchange="previewTreatFiles()">
-              </div>
-              <div class="photo-grid" id="treatPhotoPreview"></div>
-            </div>
-          </div>
-
-          <div style="display:flex;gap:10px;margin-top:10px;">
-            <button class="btn btn-warning" style="flex:1;padding:10px;font-size:14px;" onclick="saveDraftRecord()">
-              💾 儲存草稿
-            </button>
-            <button class="btn btn-success" style="flex:1;padding:10px;font-size:14px;" onclick="saveFullRecord()">
-              📋 儲存正式病歷
-            </button>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-warning" style="flex:1" onclick="saveDraftRecord()">💾 儲存草稿</button>
+            <button class="btn btn-success" style="flex:1" onclick="saveFullRecord()">📋 儲存正式病歷</button>
           </div>
         </div>
 
+        <!-- 病歷查詢分頁 -->
         <div id="history" class="page">
           <div class="section">
-            <div class="section-header">
-              <span>病歷進階查詢</span>
-            </div>
+            <div class="section-header"><span>進階關聯搜尋 (支援地址/身分證/手機/晶片)</span></div>
             <div class="section-body">
               <div class="form-grid">
+                <div class="form-group"><label>日期起</label><input type="date" id="filterStart"></div>
+                <div class="form-group"><label>日期迄</label><input type="date" id="filterEnd"></div>
                 <div class="form-group">
-                  <label>開始日期</label>
-                  <input type="date" id="filterStart">
-                </div>
-                <div class="form-group">
-                  <label>結束日期</label>
-                  <input type="date" id="filterEnd">
-                </div>
-                <div class="form-group">
-                  <label>貓咪搜尋（貓名/飼主/晶片/地址）</label>
-                  <input type="text" id="filterKey" placeholder="輸入關鍵字查詢">
+                  <label>綜合關鍵字</label>
+                  <input type="text" id="filterKey" placeholder="搜尋貓名/飼主/手機/身分證/地址">
                 </div>
                 <div class="form-group" style="align-self:end;">
                   <button class="btn btn-primary" onclick="searchHistoryRecord()">🔍 執行查詢</button>
                 </div>
               </div>
-              <div id="historyRecordList" style="margin-top:15px;">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>就診日期</th>
-                      <th>動物姓名</th>
-                      <th>體重 (kg)</th>
-                      <th>主要症狀</th>
-                      <th>回診日期</th>
-                      <th>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody id="historyTableBody">
-                    <tr><td colspan="6" style="text-align:center;">請設定查詢條件並執行查詢</td></tr>
-                  </tbody>
-                </table>
-              </div>
+              <table class="data-table">
+                <thead>
+                  <tr><th>日期</th><th>動物/病歷ID</th><th>體重</th><th>飼主/摘要</th><th>回診</th><th>操作</th></tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+              </table>
             </div>
           </div>
         </div>
 
+        <!-- 體重追蹤 -->
         <div id="weight" class="page">
           <div class="section">
-            <div class="section-header">
-              <span>動物體重變化曲線圖</span>
-            </div>
+            <div class="section-header"><span>體重趨勢圖</span></div>
             <div class="section-body">
-              <div class="form-group">
-                <label>搜尋動物</label>
-                <input type="text" id="searchWeightCat" placeholder="輸入動物姓名顯示體重曲線" oninput="loadWeightChart()">
-              </div>
+              <input type="text" id="searchWeightCat" placeholder="輸入貓名顯示曲線" oninput="loadWeightChart()">
               <div id="weightCatResult"></div>
-              <canvas id="weightChartCanvas" style="margin-top:15px;"></canvas>
+              <canvas id="weightChartCanvas"></canvas>
             </div>
           </div>
         </div>
 
-<div id="remind" class="page">
-  <div class="section">
-    <div class="section-header">
-      <span>疫苗/驅蟲/回診到期提醒 <span style="color:var(--danger);font-size:12px;">(紅色=即將到期)</span></span>
-    </div>
-    <div class="section-body">
-      <table class="data-table" id="remindListShow">
-        <thead>
-          <tr>
-            <th>動物姓名</th>
-            <th>提醒類型</th>
-            <th>到期日期</th>
-            <th>剩餘天數</th>
-            <th>狀態</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="remindTableBody">
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+        <!-- 提醒提醒 -->
+        <div id="remind" class="page">
+          <div class="section">
+            <div class="section-header"><span>到期提醒列表</span></div>
+            <div class="section-body">
+              <table class="data-table">
+                <thead><tr><th>姓名</th><th>類型</th><th>到期日</th><th>剩餘天數</th><th>操作</th></tr></thead>
+                <tbody id="remindTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
-<div id="admin" class="page">
-  <div class="section">
-    <div class="section-header">
-      <span>管理員權限管控</span>
-    </div>
-    <div class="section-body">
-      <div class="form-grid" style="max-width:500px;">
-        <div class="form-group">
-          <label>管理員帳號</label>
-          <input type="text" id="adminAcc" placeholder="請輸入管理員帳號">
-        </div>
-        <div class="form-group">
-          <label>管理員密碼</label>
-          <input type="password" id="adminPwd" placeholder="請輸入管理員密碼">
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="adminLogin()">🔐 登入管理後台</button>
-      
-      <div id="adminPanel" style="margin-top:20px;"></div>
-    </div>
-  </div>
-</div>
+        <!-- 管理員 -->
+        <div id="admin" class="page">
+          <div class="section">
+            <div class="section-header"><span>管理登入</span></div>
+            <div class="section-body">
+              <input type="text" id="adminAcc" placeholder="帳號">
+              <input type="password" id="adminPwd" placeholder="密碼">
+              <button class="btn btn-primary" onclick="adminLogin()">🔐 登入</button>
+              <div id="adminPanel"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-<div class="modal" id="imgModal" onclick="closeImgModal()">
-  <div class="modal-content" onclick="event.stopPropagation()" style="position:relative;">
-    <img src="" id="showBigImg" class="modal-img">
-    
-    <button onclick="prevImg()" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);color:#fff;border:none;padding:10px;border-radius:50%;font-size:20px;">❮</button>
-    <button onclick="nextImg()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);color:#fff;border:none;padding:10px;border-radius:50%;font-size:20px;">❯</button>
-    
-    <div style="position:absolute;bottom:15px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#fff;padding:5px 15px;border-radius:20px;font-size:13px;">
-      <span id="imgPageNum">1 / 1</span>
-    </div>
-  </div>
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, where, query, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyB2yEi76WZfALxNkInhG5oG_0LMlNqDgH0",
-  authDomain: "nibo-medical.firebaseapp.com",
-  projectId: "nibo-medical",
-  storageBucket: "nibo-medical.firebasestorage.app",
-  messagingSenderId: "832769973754",
-  appId: "1:832769973754:web:9e7782b36bfc89d02a5843"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-window.db = db;
-window.storage = storage;
-window.collection = collection;
-window.addDoc = addDoc;
-window.getDocs = getDocs;
-window.doc = doc;
-window.updateDoc = updateDoc;
-window.deleteDoc = deleteDoc;
-window.where = where;
-window.query = query;
-window.getDoc = getDoc;
-window.ref = ref;
-window.uploadBytes = uploadBytes;
-window.getDownloadURL = getDownloadURL;
-</script>
-
-<script>
-let currentCatId = null;
-let drugList = [];
-let examFiles = [];
-let treatFiles = [];
-let weightChart = null;
-let editRecordId = null;
-let nowImgList = [];
-let nowImgIndex = 0;
-let remindList = [];
-let currentRecordId = "";
-
-// 生成病歷 ID：DC + 西元年月日 + 3位英數亂數
-function generateRecordId() {
-  const date = new Date();
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const dateStr = y + m + d;
-
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let rand = "";
-  for (let i = 0; i < 3; i++) {
-    rand += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return "DC" + dateStr + rand;
-}
-
-// 顯示病歷編號
-function showRecordIdBar() {
-  let idBox = document.getElementById("recordIdBar");
-  if(!idBox) return;
-  if(currentRecordId){
-    idBox.innerHTML = `
-    <div style="background:#e6f0ff;border:1px solid #b3d4ff;padding:10px;border-radius:6px;margin-bottom:10px;">
-      <span style="font-weight:bold;color:#2c5aa0;">📋 本筆病歷編號：${currentRecordId}</span>
-    </div>
-    `;
-  }else{
-    idBox.innerHTML = "";
-  }
-}
-
-function switchTab(id, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  btn.classList.add('active');
-}
-
-function addSymptom(el) {
-  el.classList.toggle('active');
-  let val = el.innerText;
-  let content = document.getElementById('visitContent');
-  if (el.classList.contains('active')) {
-    if(!content.value.includes(val)){
-      content.value += val + "、";
-    }
-  } else {
-    content.value = content.value.replace(val + "、", "");
-  }
-}
-
-function openImgModal(src) {
-  document.getElementById('showBigImg').src = src;
-  document.getElementById('imgModal').style.display = 'flex';
-  updateImgPageNum();
-}
-function closeImgModal() {
-  document.getElementById('imgModal').style.display = 'none';
-}
-
-function clearCatForm() {
-  document.getElementById('editCatId').value = '';
-  document.getElementById('catName').value = '';
-  document.getElementById('chipId').value = '';
-  document.getElementById('catBreed').value = '';
-  document.getElementById('catBirth').value = '';
-  document.getElementById('ownerName').value = '';
-  document.getElementById('ownerPhone').value = '';
-  document.getElementById('ownerPhone2').value = '';
-  document.getElementById('ownerId').value = '';
-  document.getElementById('ownerAddr').value = '';
-  document.getElementById('catNote').value = '';
-}
-
-async function saveCatData() {
-  const id = document.getElementById('editCatId').value;
-  const data = {
-    name: document.getElementById('catName').value,
-    chip: document.getElementById('chipId').value,
-    gender: document.getElementById('catGender').value,
-    breed: document.getElementById('catBreed').value,
-    birth: document.getElementById('catBirth').value,
-    neuter: document.getElementById('catNeuter').value,
-    owner: document.getElementById('ownerName').value,
-    phone: document.getElementById('ownerPhone').value,
-    phone2: document.getElementById('ownerPhone2').value,
-    ownerId: document.getElementById('ownerId').value,
-    addr: document.getElementById('ownerAddr').value,
-    note: document.getElementById('catNote').value,
-    createTime: new Date().toISOString()
-  };
-
-  if (!data.name) return alert('請輸入動物姓名');
-  if (!data.owner) return alert('請輸入飼主姓名');
-  if (!data.phone) return alert('請輸入飼主聯絡電話');
-
-  try {
-    if (id) {
-      await updateDoc(doc(db, 'cats', id), data);
-      alert('✅ 動物資料編輯完成');
-    } else {
-      await addDoc(collection(db, 'cats'), data);
-      alert('✅ 動物資料新增成功');
-    }
-    clearCatForm();
-    searchCatAll();
-  } catch (e) {
-    alert('❌ 儲存失敗：' + e.message);
-  }
-}
-
-async function searchCatAll() {
-  const kw = document.getElementById('searchCatInput').value.toLowerCase();
-  const snap = await getDocs(collection(db, 'cats'));
-  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const res = list.filter(i =>
-    (i.name && i.name.toLowerCase().includes(kw)) ||
-    (i.owner && i.owner.toLowerCase().includes(kw)) ||
-    (i.phone && i.phone.includes(kw)) ||
-    (i.chip && i.chip.includes(kw)) ||
-    (i.ownerId && i.ownerId.includes(kw))
-  );
-
-  const tbody = document.getElementById('catTableBody');
-  if (res.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">無符合條件的動物資料</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = res.map(i => `
-    <tr>
-      <td>${i.name || '-'}</td>
-      <td>${i.chip || '-'}</td>
-      <td>${i.gender}/${i.neuter}</td>
-      <td>${i.owner || '-'}</td>
-      <td>${i.phone || '-'}</td>
-      <td>
-        <button class="btn btn-outline" onclick="editCat('${i.id}')">✏️ 編輯</button>
-        <button class="btn btn-primary" onclick="bindCat('${i.id}','${i.name}')">📝 綁定</button>
-      </td>
-    </tr>
-  `).join('');
-}
-
-async function editCat(id) {
-  const docRef = doc(db, 'cats', id);
-  const snap = await getDoc(docRef);
-  if(!snap.exists()) return alert('查無此資料');
-  const d = snap.data();
-
-  document.getElementById('editCatId').value = id;
-  document.getElementById('catName').value = d.name || '';
-  document.getElementById('chipId').value = d.chip || '';
-  document.getElementById('catGender').value = d.gender || '公';
-  document.getElementById('catBreed').value = d.breed || '';
-  document.getElementById('catBirth').value = d.birth || '';
-  document.getElementById('catNeuter').value = d.neuter || '未結紮';
-  document.getElementById('ownerName').value = d.owner || '';
-  document.getElementById('ownerPhone').value = d.phone || '';
-  document.getElementById('ownerPhone2').value = d.phone2 || '';
-  document.getElementById('ownerId').value = d.ownerId || '';
-  document.getElementById('ownerAddr').value = d.addr || '';
-  document.getElementById('catNote').value = d.note || '';
-}
-
-// 綁定動物到病歷
-function bindCat(id, name){
-  currentCatId = id;
-  document.getElementById('bindCatInfo').innerHTML = `
-    ✅ 已綁定動物：<strong>${name}</strong>
-    <button class="btn btn-danger" onclick="unbindCat()" style="margin-left:10px;">❌ 取消綁定</button>
-  `;
-
-  if(!currentRecordId){
-    currentRecordId = generateRecordId();
-    showRecordIdBar();
-  }
-}
-
-// 取消綁定
-function unbindCat(){
-  currentCatId = null;
-  currentRecordId = "";
-  showRecordIdBar();
-  document.getElementById('bindCatInfo').innerHTML = '尚未綁定動物，請先搜尋並選擇欲建立病歷的動物';
-}
-
-async function searchCatForRecord() {
-  const kw = document.getElementById('searchRecordCat').value.toLowerCase().trim();
-  const snap = await getDocs(collection(db, 'cats'));
-  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  
-  const res = list.filter(i => {
-    return (
-      (i.name && i.name.toLowerCase().includes(kw)) ||
-      (i.chip && i.chip.includes(kw)) ||
-      (i.owner && i.owner.toLowerCase().includes(kw)) ||
-      (i.phone && i.phone.includes(kw))
-    );
-  });
-
-  let html = '';
-  if (res.length > 0) {
-    html = '<table class="data-table"><thead><tr><th>姓名</th><th>晶片號</th><th>飼主</th><th>手機</th><th>操作</th></tr></thead><tbody>';
-    html += res.map(i => `
-      <tr>
-        <td>${i.name || '-'}</td>
-        <td>${i.chip || '-'}</td>
-        <td>${i.owner || '-'}</td>
-        <td>${i.phone || '-'}</td>
-        <td><button class="btn btn-primary" onclick="bindCat('${i.id}','${i.name}')">選擇此動物</button></td>
-      </tr>
-    `).join('');
-    html += '</tbody></table>';
-  } else {
-    html = '未找到符合條件的動物';
-  }
-
-  if(!kw){
-    unbindCat();
-    return;
-  }
-  document.getElementById('bindCatInfo').innerHTML = html;
-}
-
-function addDrugItem() {
-  const item = {
-    name: document.getElementById('drugName').value,
-    dose: document.getElementById('drugDose').value,
-    times: document.getElementById('drugTimes').value,
-    start: document.getElementById('drugStartDate').value,
-    end: document.getElementById('drugEndDate').value,
-    remark: document.getElementById('drugRemark').value
-  };
-
-  if (!item.name) return alert('請輸入藥品名稱');
-  if (!item.dose) return alert('請輸入用藥劑量');
-
-  drugList.push(item);
-  showDrugList();
-
-  document.getElementById('drugName').value = '';
-  document.getElementById('drugDose').value = '';
-  document.getElementById('drugTimes').value = '';
-  document.getElementById('drugStartDate').value = '';
-  document.getElementById('drugEndDate').value = '';
-  document.getElementById('drugRemark').value = '';
-}
-
-function showDrugList() {
-  const tbody = document.getElementById('drugTableBody');
-  if (drugList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">尚未新增用藥紀錄</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = drugList.map((item, index) => `
-    <tr>
-      <td>${item.name}</td>
-      <td>${item.dose}</td>
-      <td>${item.times || '-'}</td>
-      <td>${item.start || '-'} ~ ${item.end || '-'}</td>
-      <td>${item.remark || '-'}</td>
-      <td><button class="btn btn-danger" onclick="deleteDrug(${index})">🗑️ 刪除</button></td>
-    </tr>
-  `).join('');
-}
-
-function deleteDrug(index) {
-  drugList.splice(index, 1);
-  showDrugList();
-}
-
-function previewExamFiles() {
-  const files = document.getElementById('uploadExamFile').files;
-  examFiles = examFiles.concat(Array.from(files));
-  
-  const preview = document.getElementById('examPhotoPreview');
-  preview.innerHTML = '';
-
-  examFiles.forEach((file, index) => {
-    let url;
-    if(file.type.includes('pdf')){
-      url = 'https://via.placeholder.com/120/eeeeee/666666?text=PDF';
-    }else{
-      url = URL.createObjectURL(file);
-    }
-    preview.innerHTML += `
-      <div class="photo-item">
-        <img src="${url}" onclick="openImgModal('${url}')">
-        <button onclick="deleteExamPhoto(${index})" style="
-          position:absolute; top:2px; right:2px; 
-          background:red; color:white; border:none; 
-          border-radius:50%; width:20px; height:20px;
-          cursor:pointer; font-size:12px;
-        ">✕</button>
-      </div>
-    `;
-  });
-}
-
-function previewTreatFiles() {
-  const files = document.getElementById('uploadTreatFile').files;
-  treatFiles = treatFiles.concat(Array.from(files));
-  
-  const preview = document.getElementById('treatPhotoPreview');
-  preview.innerHTML = '';
-
-  treatFiles.forEach((file, index) => {
-    const url = URL.createObjectURL(file);
-    preview.innerHTML += `
-      <div class="photo-item">
-        <img src="${url}" onclick="openImgModal('${url}')">
-        <button onclick="deleteTreatPhoto(${index})" style="
-          position:absolute; top:2px; right:2px; 
-          background:red; color:white; border:none; 
-          border-radius:50%; width:20px; height:20px;
-          cursor:pointer; font-size:12px;
-        ">✕</button>
-      </div>
-    `;
-  });
-}
-
-async function uploadFiles(files, path){
-  const urls = [];
-  for(const f of files){
-    const name = `${path}/${Date.now()}_${f.name}`;
-    const fileRef = ref(storage, name);
-    await uploadBytes(fileRef, f);
-    const url = await getDownloadURL(fileRef);
-    urls.push(url);
-  }
-  return urls;
-}
-
-// 儲存草稿
-async function saveDraftRecord() {
-  if (!currentCatId) {
-    alert('❌ 請先綁定就診動物');
-    return;
-  }
-  if (!confirm('確定要儲存草稿嗎？')) return;
-
-  if(!currentRecordId) currentRecordId = generateRecordId();
-  showRecordIdBar();
-
-  const data = {
-    recordId: currentRecordId,
-    catId: currentCatId,
-    visitDate: document.getElementById('visitDate').value || '',
-    reVisitDate: document.getElementById('reVisitDate').value || '',
-    surgeryDate: document.getElementById('surgeryDate').value || '',
-    weight: document.getElementById('nowWeight').value || '',
-    content: document.getElementById('visitContent').value || '',
-    drugs: drugList,
-    isDraft: true,
-    createTime: new Date().toISOString(),
-    updateTime: new Date().toISOString(),
-    dewormMedicine: document.getElementById('dewormMedicine').value || '',
-    dewormTime: document.getElementById('dewormTime').value || '',
-    dewormRemindDate: document.getElementById('dewormRemindDate').value || ''
-  };
-
-  try {
-    await addDoc(collection(db, 'records'), data);
-    alert('✅ 草稿儲存成功！病歷編號：' + currentRecordId);
-  } catch (e) {
-    alert('❌ 草稿儲存失敗：' + e.message);
-  }
-}
-
-// 儲存正式病歷
-async function saveFullRecord() {
-  if (!currentCatId) {
-    alert('❌ 請先綁定就診動物！');
-    return;
-  }
-
-  const visitDate = document.getElementById('visitDate').value;
-  const content = document.getElementById('visitContent').value.trim();
-
-  if (!visitDate) {
-    alert('❌ 請選擇就診日期！');
-    return;
-  }
-  if (!content) {
-    alert('❌ 請填寫症狀/看診內容！');
-    return;
-  }
-
-  if (!confirm('確定儲存病歷？編輯模式會直接覆蓋舊資料')) return;
-  if(!currentRecordId) currentRecordId = generateRecordId();
-  showRecordIdBar();
-
-  const examUrls = await uploadFiles(examFiles, `exam/${currentCatId}`);
-  const treatUrls = await uploadFiles(treatFiles, `treat/${currentCatId}`);
-
-  const data = {
-    recordId: currentRecordId,
-    catId: currentCatId,
-    visitDate: visitDate,
-    reVisitDate: document.getElementById('reVisitDate').value,
-    surgeryDate: document.getElementById('surgeryDate').value,
-    weight: document.getElementById('nowWeight').value,
-    content: content,
-    drugs: drugList,
-    examFiles: examUrls,
-    treatFiles: treatUrls,
-    imgList: [...examUrls, ...treatUrls],
-    updateTime: new Date().toISOString(),
-    dewormMedicine: document.getElementById('dewormMedicine').value,
-    dewormTime: document.getElementById('dewormTime').value,
-    dewormRemindDate: document.getElementById('dewormRemindDate').value
-  };
-
-  try {
-    if(editRecordId){
-      await updateDoc(doc(db, 'records', editRecordId), data);
-      alert('✅ 病歷已覆蓋更新完成！編號：' + currentRecordId);
-      editRecordId = null;
-    }else{
-      data.createTime = new Date().toISOString();
-      await addDoc(collection(db, 'records'), data);
-      alert('✅ 新病歷儲存成功！編號：' + currentRecordId);
-    }
-    
-    // 清空表單
-    drugList = [];
-    showDrugList();
-    document.getElementById('visitContent').value = '';
-    document.getElementById('nowWeight').value = '';
-    document.getElementById('examPhotoPreview').innerHTML = '';
-    document.getElementById('treatPhotoPreview').innerHTML = '';
-    examFiles = [];
-    treatFiles = [];
-    
-    document.querySelectorAll('.symptom-tag').forEach(tag => tag.classList.remove('active'));
-    currentRecordId = "";
-    showRecordIdBar();
-    loadRemindList();
-  } catch (e) {
-    alert('❌ 儲存失敗：' + e.message);
-  }
-}
-
-// 編輯病歷
-async function editRecord(id) {
-  if(!confirm('確定要編輯這筆病歷嗎？')) return;
-  
-  const docRef = doc(db, 'records', id);
-  const snap = await getDoc(docRef);
-  if(!snap.exists()) return alert('查無病歷資料');
-  const data = snap.data();
-
-  const catRef = doc(db, 'cats', data.catId);
-  const catSnap = await getDoc(catRef);
-  const catName = catSnap.exists() ? catSnap.data().name : '未知動物';
-
-  editRecordId = id;
-  currentRecordId = data.recordId || "";
-  showRecordIdBar();
-  
-  switchTab('record', document.querySelectorAll('.tab-btn')[1]);
-  bindCat(data.catId, catName);
-
-  document.getElementById('visitDate').value = data.visitDate || '';
-  document.getElementById('reVisitDate').value = data.reVisitDate || '';
-  document.getElementById('surgeryDate').value = data.surgeryDate || '';
-  document.getElementById('nowWeight').value = data.weight || '';
-  document.getElementById('visitContent').value = data.content || '';
-
-  drugList = data.drugs || [];
-  showDrugList();
-
-  document.getElementById('dewormMedicine').value = data.dewormMedicine || '';
-  document.getElementById('dewormTime').value = data.dewormTime || '';
-  document.getElementById('dewormRemindDate').value = data.dewormRemindDate || '';
-
-  alert('✅ 舊病歷已載入，修改後儲存會直接覆蓋舊資料');
-}
-
-// 刪除病歷
-async function deleteRecord(id) {
-  if(!confirm('⚠️ 確定要刪除這筆病歷嗎？\n此動作無法復原！')) return;
-  
-  try {
-    await deleteDoc(doc(db, 'records', id));
-    alert('✅ 病歷刪除成功');
-    searchHistoryRecord();
-    loadRemindList();
-  } catch(e) {
-    alert('❌ 刪除失敗：' + e.message);
-  }
-}
-
-// 查詢病歷
-async function searchHistoryRecord() {
-  const start = document.getElementById('filterStart').value;
-  const end = document.getElementById('filterEnd').value;
-  let key = document.getElementById('filterKey').value.trim();
-
-  const recordSnap = await getDocs(collection(db, 'records'));
-  let allRecords = recordSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-  const catSnap = await getDocs(collection(db, 'cats'));
-  const catMap = {};
-  catSnap.docs.forEach(doc => {
-    const c = doc.data();
-    catMap[doc.id] = { name: c.name || '' };
-  });
-
-  if (start) allRecords = allRecords.filter(r => r.visitDate >= start);
-  if (end) allRecords = allRecords.filter(r => r.visitDate <= end);
-
-  if (key) {
-    const kw = key.toLowerCase();
-    allRecords = allRecords.filter(record => {
-      const cat = catMap[record.catId];
-      if (!cat) return false;
-      return cat.name.toLowerCase().includes(kw);
-    });
-  }
-
-  const tbody = document.getElementById('historyTableBody');
-  if (allRecords.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">無符合條件的病歷紀錄</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = allRecords.map(item => `
-  <tr>
-    <td>${item.visitDate || ''}</td>
-    <td>${catMap[item.catId]?.name || '未知動物'}</td>
-    <td>${item.weight || '-'}</td>
-    <td>${(item.content || '無描述').substring(0, 50)}...</td>
-    <td>${item.reVisitDate || '-'}</td>
-    <td>
-      <button class="btn btn-outline" onclick="viewRecordDetail('${item.id}')">📄 查看</button>
-      <button class="btn btn-primary" onclick="editRecord('${item.id}')">✏️ 編輯</button>
-      <button class="btn btn-danger" onclick="deleteRecord('${item.id}')">🗑️ 刪除</button>
-    </td>
-  </tr>
-  `).join('');
-}
-
-// 查看病歷明細
-async function viewRecordDetail(id){
-  const docRef = doc(db,'records',id);
-  const snap = await getDoc(docRef);
-  if(!snap.exists()) return alert('查無病歷');
-  const data = snap.data();
-  
-  const catRef = doc(db, 'cats', data.catId);
-  const catSnap = await getDoc(catRef);
-  const catName = catSnap.exists() ? catSnap.data().name : '未知動物';
-  
-  let content = `
-動物：${catName}
-就診日期：${data.visitDate}
-回診日期：${data.reVisitDate || '無'}
-體重：${data.weight || '未填寫'}
-症狀：${data.content || '無'}
-
-💊 驅蟲紀錄：
-驅蟲藥品：${data.dewormMedicine || '未填寫'}
-執行時間：${data.dewormTime || '未填寫'}
-下次提醒：${data.dewormRemindDate || '未設定'}
-
-用藥紀錄：
-`;
-  if(data.drugs && data.drugs.length>0){
-    data.drugs.forEach((d,i)=>{
-      content += `\n${i+1}. ${d.name} - ${d.dose} ${d.times||''}`;
-    });
-  }else{
-    content += '\n無用藥紀錄';
-  }
-
-  alert(content);
-  nowImgList = data.imgList || [];
-  nowImgIndex = 0;
-  if(nowImgList.length > 0) openImgModal(nowImgList[0]);
-}
-
-// 體重圖表
-async function loadWeightChart() {
-  const kw = document.getElementById('searchWeightCat').value.toLowerCase().trim();
-  const resultArea = document.getElementById('weightCatResult');
-
-  if (!kw) {
-    if (weightChart) weightChart.destroy();
-    resultArea.innerHTML = '';
-    return;
-  }
-
-  const catSnap = await getDocs(collection(db, 'cats'));
-  const catList = catSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const matchedCats = catList.filter(item => 
-    (item.name && item.name.toLowerCase().includes(kw)) ||
-    (i.chip && i.chip.includes(kw))
-  );
-
-  if (matchedCats.length === 0) {
-    resultArea.innerHTML = '<div style="padding:10px;">未找到任何貓咪</div>';
-    if (weightChart) weightChart.destroy();
-    return;
-  }
-
-  let html = `
-    <div style="margin:15px 0; padding:10px; border:1px solid #ddd; border-radius:6px;">
-      <div style="margin-bottom:8px; font-weight:bold; color:#2c5aa0;">✅ 找到以下貓咪，請點擊查看體重：</div>
-  `;
-  matchedCats.forEach(cat => {
-    html += `
-      <button onclick="showWeightForCat('${cat.id}')"
-        style="padding:8px 12px; margin:5px; border-radius:6px; border:none; background:#2c5aa0; color:white; cursor:pointer;">
-        ${cat.name} (${cat.owner || '無飼主'})
-      </button>
-    `;
-  });
-  html += '</div>';
-  resultArea.innerHTML = html;
-}
-
-window.showWeightForCat = async function(catId) {
-  const catSnap = await getDoc(doc(db, 'cats', catId));
-  if (!catSnap.exists()) return;
-  const cat = catSnap.data();
-
-  const recSnap = await getDocs(query(collection(db, 'records'), where('catId', '==', catId)));
-  const records = recSnap.docs.map(d => d.data())
-    .filter(item => item.weight && item.visitDate)
-    .sort((a, b) => new Date(a.visitDate) - new Date(b.visitDate));
-
-  const ctx = document.getElementById('weightChartCanvas').getContext('2d');
-  if (weightChart) weightChart.destroy();
-
-  weightChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: records.map(item => item.visitDate),
-      datasets: [{
-        label: `${cat.name} 的體重變化 (kg)`,
-        data: records.map(item => item.weight),
-        borderColor: '#2c5aa0',
-        backgroundColor: 'rgba(44, 90, 160, 0.1)',
-        borderWidth: 2,
-        tension: 0.3,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: { display: true, text: `${cat.name} 體重追蹤曲線圖`, font: { size: 16 } }
-      },
-      scales: { y: { beginAtZero: false }, x: { title: { display: true, text: '日期' } } }
-    }
-  });
-}
-
-// 管理員
-let isAdminLoggedIn = false;
-function adminLogin() {
-  const acc = document.getElementById('adminAcc').value;
-  const pwd = document.getElementById('adminPwd').value;
-  if (acc === '2015starmos' && pwd === 'ha821208') {
-    isAdminLoggedIn = true;
-    alert('✅ 管理員登入成功！');
-    document.getElementById('adminTabBtn').style.display = 'inline-flex';
-    renderAdminPanel();
-  } else {
-    alert('❌ 帳號或密碼錯誤');
-  }
-}
-function adminLogout() {
-  isAdminLoggedIn = false;
-  alert('✅ 已登出管理模式');
-  document.getElementById('adminTabBtn').style.display = 'none';
-  renderAdminPanel();
-}
-function renderAdminPanel() {
-  const panel = document.getElementById('adminPanel');
-  if (!isAdminLoggedIn) {
-    panel.innerHTML = `<div style="padding:15px;background:#f8d7da;border-radius:6px;">請輸入管理員帳號密碼登入</div>`;
-    return;
-  }
-  panel.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px;">
-      <div style="background:#f5f5f5;padding:15px;border-radius:6px;">
-        <h4 style="color:var(--primary);margin-bottom:10px;">📦 資料備份 / 還原</h4>
-        <button class="btn btn-success" onclick="backupAllData()">💾 備份所有資料</button>
-      </div>
-      <div style="background:#f5f5f5;padding:15px;border-radius:6px;">
-        <h4 style="color:var(--primary);margin-bottom:10px;">🔐 系統管理</h4>
-        <button class="btn btn-danger" onclick="adminLogout()">登出管理員</button>
-      </div>
-    </div>
-  `;
-}
-async function backupAllData() {
-  if (!confirm('確認備份所有動物＋病歷資料？')) return;
-  try {
-    const cats = await getDocs(collection(db, 'cats'));
-    const records = await getDocs(collection(db, 'records'));
-    const data = {
-      cats: cats.docs.map(d => ({ id: d.id, ...d.data() })),
-      records: records.docs.map(d => ({ id: d.id, ...d.data() })),
-      time: new Date().toLocaleString()
+  <div class="modal" id="imgModal" onclick="closeImgModal()"><img id="showBigImg" class="modal-img"></div>
+
+  <!-- Firebase 模組 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, where, query, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB2yEi76WZfALxNkInhG5oG_0LMlNqDgH0",
+      authDomain: "nibo-medical.firebaseapp.com",
+      projectId: "nibo-medical",
+      storageBucket: "nibo-medical.firebasestorage.app",
+      messagingSenderId: "832769973754",
+      appId: "1:832769973754:web:9e7782b36bfc89d02a5843"
     };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `獸醫病歷系統備份_${new Date().getTime()}.json`;
-    a.click();
-    alert('✅ 備份檔案已下載');
-  } catch (e) { alert('備份失敗：' + e.message); }
-}
 
-// 提醒列表
-async function loadRemindList() {
-  remindList = [];
-  const snap = await getDocs(collection(db, 'records'));
-  const records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  
-  const catSnap = await getDocs(collection(db, 'cats'));
-  const catMap = {};
-  catSnap.docs.forEach(c => catMap[c.id] = c.data().name);
-  const today = new Date();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  records.forEach(r => {
-    if (r.reVisitDate) {
-      const dt = new Date(r.reVisitDate);
-      const diff = Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
-      if (diff >= 0) remindList.push({ name: catMap[r.catId], type: '回診', date: r.reVisitDate, days: diff });
+    // 全域變數供原生 JS 使用
+    window.db = db;
+    window.collection = collection;
+    window.addDoc = addDoc;
+    window.getDocs = getDocs;
+    window.doc = doc;
+    window.updateDoc = updateDoc;
+    window.deleteDoc = deleteDoc;
+    window.where = where;
+    window.query = query;
+    window.getDoc = getDoc;
+  </script>
+
+  <script>
+    let currentCatId = null;
+    let currentRecordId = "";
+    let drugList = [];
+    let editRecordId = null;
+    let weightChart = null;
+
+    // 分頁切換
+    function switchTab(id, btn) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
     }
-    if (r.dewormRemindDate) {
-      const dt = new Date(r.dewormRemindDate);
-      const diff = Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
-      if (diff >= 0) remindList.push({ name: catMap[r.catId], type: '驅蟲', date: r.dewormRemindDate, days: diff });
+
+    // 生成 ID
+    function generateRecordId() {
+      const d = new Date();
+      const dateStr = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+      return "DC" + dateStr + Math.random().toString(36).substr(2,3).toUpperCase();
     }
-  });
 
-  remindList.sort((a, b) => a.days - b.days);
-  const tbody = document.getElementById("remindTableBody");
-  if (remindList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">目前無任何提醒</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = remindList.map((item, index) => `
-    <tr class="${item.days <= 7 ? 'warning' : ''}">
-      <td>${item.name}</td>
-      <td>${item.type}</td>
-      <td>${item.date}</td>
-      <td>${item.days} 天</td>
-      <td>${item.days <= 7 ? '即將到期' : '正常'}</td>
-      <td>
-        <button class="btn btn-warning" onclick="doneRemind(${index})">✅ 已處理</button>
-      </td>
-    </tr>
-  `).join('');
-}
-function doneRemind(index) {
-  if (!confirm("確定已完成此提醒？")) return;
-  remindList.splice(index, 1);
-  loadRemindList();
-}
+    function showRecordIdBar() {
+      const box = document.getElementById("recordIdBar");
+      box.innerHTML = currentRecordId ? `<div style="background:#e3f2fd; padding:10px; border-radius:4px; margin-bottom:10px; color:#1565c0; font-weight:bold;">📋 當前病歷編號：${currentRecordId}</div>` : "";
+    }
 
-// 圖片翻頁
-function prevImg(){
-  if(nowImgList.length === 0) return;
-  nowImgIndex = (nowImgIndex - 1 + nowImgList.length) % nowImgList.length;
-  document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
-  updateImgPageNum();
-}
-function nextImg(){
-  if(nowImgList.length === 0) return;
-  nowImgIndex = (nowImgIndex + 1) % nowImgList.length;
-  document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
-  updateImgPageNum();
-}
-function updateImgPageNum(){
-  if(!nowImgList.length) return;
-  document.getElementById('imgPageNum').innerText = `${nowImgIndex+1} / ${nowImgList.length}`;
-}
+    // 動物資料管理
+    async function saveCatData() {
+      const id = document.getElementById('editCatId').value;
+      const data = {
+        name: document.getElementById('catName').value,
+        chip: document.getElementById('chipId').value,
+        gender: document.getElementById('catGender').value,
+        breed: document.getElementById('catBreed').value,
+        birth: document.getElementById('catBirth').value,
+        neuter: document.getElementById('catNeuter').value,
+        owner: document.getElementById('ownerName').value,
+        phone: document.getElementById('ownerPhone').value,
+        phone2: document.getElementById('ownerPhone2').value,
+        ownerId: document.getElementById('ownerId').value,
+        addr: document.getElementById('ownerAddr').value,
+        note: document.getElementById('catNote').value,
+        updateTime: new Date().toISOString()
+      };
+      if(!data.name || !data.owner) return alert("姓名與飼主必填");
+      try {
+        if(id) {
+          await updateDoc(doc(db, 'cats', id), data);
+          alert("更新成功");
+        } else {
+          await addDoc(collection(db, 'cats'), data);
+          alert("新增成功");
+        }
+        clearCatForm();
+        searchCatAll();
+      } catch(e) { alert(e.message); }
+    }
 
-// 刪除預覽圖片
-function deleteExamPhoto(index) { examFiles.splice(index,1); previewExamFiles(); }
-function deleteTreatPhoto(index) { treatFiles.splice(index,1); previewTreatFiles(); }
+    async function searchCatAll() {
+      const kw = document.getElementById('searchCatInput').value.toLowerCase();
+      const snap = await getDocs(collection(db, 'cats'));
+      const list = snap.docs.map(d => ({id:d.id, ...d.data()})).filter(c => 
+        (c.name||"").toLowerCase().includes(kw) || (c.owner||"").toLowerCase().includes(kw) || (c.phone||"").includes(kw)
+      );
+      document.getElementById('catTableBody').innerHTML = list.map(c => `
+        <tr>
+          <td>${c.name}</td><td>${c.chip||'-'}</td><td>${c.gender}</td><td>${c.owner}</td><td>${c.phone}</td>
+          <td>
+            <button class="btn btn-outline" onclick="editCat('${c.id}')">✏️</button>
+            <button class="btn btn-primary" onclick="bindCat('${c.id}','${c.name}')">📝 綁定</button>
+          </td>
+        </tr>
+      `).join('');
+    }
 
-window.onload = function() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('visitDate').value = today;
-  showDrugList();
-  loadRemindList();
-};
-</script>
+    async function editCat(id) {
+      const snap = await getDoc(doc(db, 'cats', id));
+      const d = snap.data();
+      document.getElementById('editCatId').value = id;
+      document.getElementById('catName').value = d.name;
+      document.getElementById('chipId').value = d.chip;
+      document.getElementById('ownerName').value = d.owner;
+      document.getElementById('ownerPhone').value = d.phone;
+      document.getElementById('ownerId').value = d.ownerId;
+      document.getElementById('ownerAddr').value = d.addr;
+      document.getElementById('catNote').value = d.note;
+    }
+
+    function clearCatForm() {
+      document.getElementById('editCatId').value = '';
+      document.querySelectorAll('#cat input').forEach(i => i.value = '');
+    }
+
+    // 病歷綁定
+    function bindCat(id, name) {
+      currentCatId = id;
+      currentRecordId = generateRecordId();
+      document.getElementById('bindCatInfo').innerHTML = `✅ 已綁定：<strong>${name}</strong> <button class="btn btn-danger" onclick="unbindCat()">取消</button>`;
+      showRecordIdBar();
+    }
+
+    function unbindCat() {
+      currentCatId = null; currentRecordId = "";
+      document.getElementById('bindCatInfo').innerHTML = "尚未綁定動物";
+      showRecordIdBar();
+    }
+
+    async function searchCatForRecord() {
+      const kw = document.getElementById('searchRecordCat').value.toLowerCase().trim();
+      if(!kw) return;
+      const snap = await getDocs(collection(db, 'cats'));
+      const res = snap.docs.map(d => ({id:d.id, ...d.data()})).filter(c => 
+        (c.name||"").toLowerCase().includes(kw) || (c.chip||"").includes(kw) || (c.owner||"").toLowerCase().includes(kw) || (c.phone||"").includes(kw)
+      );
+      let html = res.map(c => `<div style="padding:5px; border-bottom:1px solid #eee;">${c.name} (${c.owner}) <button class="btn btn-primary" onclick="bindCat('${c.id}','${c.name}')">選擇</button></div>`).join('');
+      document.getElementById('bindCatInfo').innerHTML = html || "找無動物";
+    }
+
+    // 用藥
+    function addDrugItem() {
+      const n = document.getElementById('drugName').value;
+      if(!n) return;
+      drugList.push({name:n, dose:document.getElementById('drugDose').value, times:document.getElementById('drugTimes').value});
+      showDrugList();
+    }
+    function showDrugList() {
+      document.getElementById('drugTableBody').innerHTML = drugList.map((d,i) => `<tr><td>${d.name}</td><td>${d.dose}</td><td>${d.times}</td><td><button onclick="drugList.splice(${i},1);showDrugList();">刪除</button></td></tr>`).join('');
+    }
+
+    // 關鍵修正：病歷查詢關聯邏輯
+    async function searchHistoryRecord() {
+      const start = document.getElementById('filterStart').value;
+      const end = document.getElementById('filterEnd').value;
+      const key = document.getElementById('filterKey').value.trim().toLowerCase();
+
+      try {
+        // 1. 抓取所有貓咪建立索引
+        const catSnap = await getDocs(collection(db, 'cats'));
+        const allCats = catSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        // 2. 找出匹配關鍵字的貓咪 ID (多欄位比對)
+        const matchedIds = allCats.filter(c => {
+          if (!key) return true;
+          return (
+            (c.name && c.name.toLowerCase().includes(key)) ||
+            (c.chip && c.chip.includes(key)) ||
+            (c.owner && c.owner.toLowerCase().includes(key)) ||
+            (c.phone && c.phone.includes(key)) ||
+            (c.ownerId && c.ownerId.toLowerCase().includes(key)) ||
+            (c.addr && c.addr.toLowerCase().includes(key))
+          );
+        }).map(c => c.id);
+
+        const catMap = {};
+        allCats.forEach(c => catMap[c.id] = c);
+
+        // 3. 抓取病歷並過濾
+        const recSnap = await getDocs(collection(db, 'records'));
+        let filtered = recSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        filtered = filtered.filter(r => {
+          const isCatMatch = matchedIds.includes(r.catId);
+          let isDateMatch = true;
+          if (start && r.visitDate < start) isDateMatch = false;
+          if (end && r.visitDate > end) isDateMatch = false;
+          return isCatMatch && isDateMatch;
+        });
+
+        filtered.sort((a,b) => new Date(b.visitDate) - new Date(a.visitDate));
+
+        // 4. 渲染
+        const tbody = document.getElementById('historyTableBody');
+        if (filtered.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">找無相關病歷</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = filtered.map(r => {
+          const c = catMap[r.catId] || {};
+          return `
+            <tr>
+              <td>${r.visitDate}</td>
+              <td><strong>${c.name||'未知'}</strong><br><small style="color:#666;">ID: ${r.recordId||'未編號'}</small></td>
+              <td>${r.weight||'-'}</td>
+              <td><div style="font-size:11px; color:blue;">飼主: ${c.owner||'-'}</div>${(r.content||'').substring(0,20)}...</td>
+              <td>${r.reVisitDate||'-'}</td>
+              <td>
+                <button class="btn btn-outline" onclick="viewRecordDetail('${r.id}')">📄</button>
+                <button class="btn btn-primary" onclick="editRecord('${r.id}')">✏️</button>
+                <button class="btn btn-danger" onclick="deleteRecord('${r.id}')">🗑️</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch(e) { alert("搜尋失敗: " + e.message); }
+    }
+
+    // 儲存病歷
+    async function saveFullRecord() {
+      if(!currentCatId) return alert("請先綁定動物");
+      const data = {
+        recordId: currentRecordId,
+        catId: currentCatId,
+        visitDate: document.getElementById('visitDate').value,
+        reVisitDate: document.getElementById('reVisitDate').value,
+        weight: document.getElementById('nowWeight').value,
+        content: document.getElementById('visitContent').value,
+        drugs: drugList,
+        dewormMedicine: document.getElementById('dewormMedicine').value,
+        dewormRemindDate: document.getElementById('dewormRemindDate').value,
+        createTime: new Date().toISOString()
+      };
+      try {
+        if(editRecordId) {
+          await updateDoc(doc(db, 'records', editRecordId), data);
+        } else {
+          await addDoc(collection(db, 'records'), data);
+        }
+        alert("病歷已儲存");
+        location.reload();
+      } catch(e) { alert(e.message); }
+    }
+
+    async function deleteRecord(id) {
+      if(confirm("確定刪除？")) {
+        await deleteDoc(doc(db, 'records', id));
+        searchHistoryRecord();
+      }
+    }
+
+    function viewRecordDetail(id) {
+      alert("請點擊編輯查看完整內容，或檢查 Console");
+    }
+
+    async function editRecord(id) {
+      const snap = await getDoc(doc(db, 'records', id));
+      const r = snap.data();
+      editRecordId = id;
+      currentRecordId = r.recordId;
+      currentCatId = r.catId;
+      switchTab('record', document.querySelectorAll('.tab-btn')[1]);
+      document.getElementById('visitDate').value = r.visitDate;
+      document.getElementById('nowWeight').value = r.weight;
+      document.getElementById('visitContent').value = r.content;
+      drugList = r.drugs || [];
+      showDrugList();
+      showRecordIdBar();
+    }
+
+    // 體重追蹤
+    async function loadWeightChart() {
+      const kw = document.getElementById('searchWeightCat').value;
+      if(!kw) return;
+      const snap = await getDocs(collection(db, 'cats'));
+      const cats = snap.docs.map(d=>({id:d.id, ...d.data()})).filter(c => c.name.includes(kw));
+      document.getElementById('weightCatResult').innerHTML = cats.map(c => `<button class="btn" onclick="renderChart('${c.id}','${c.name}')">${c.name}</button>`).join('');
+    }
+
+    async function renderChart(id, name) {
+      const snap = await getDocs(query(collection(db, 'records'), where('catId', '==', id)));
+      const data = snap.docs.map(d=>d.data()).filter(r=>r.weight).sort((a,b)=>new Date(a.visitDate)-new Date(b.visitDate));
+      const ctx = document.getElementById('weightChartCanvas').getContext('2d');
+      if(weightChart) weightChart.destroy();
+      weightChart = new Chart(ctx, {
+        type:'line',
+        data: {
+          labels: data.map(r=>r.visitDate),
+          datasets: [{label:name+' 體重(kg)', data:data.map(r=>r.weight), borderColor:'#2c5aa0'}]
+        }
+      });
+    }
+
+    // 管理員登入
+    function adminLogin() {
+      if(document.getElementById('adminAcc').value === '2015starmos' && document.getElementById('adminPwd').value === 'ha821208') {
+        document.getElementById('adminTabBtn').style.display = 'inline-block';
+        alert("管理員模式已開啟");
+      }
+    }
+
+    window.onload = () => {
+      document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+    };
+  </script>
 </body>
 </html>
