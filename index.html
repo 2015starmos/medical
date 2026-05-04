@@ -1105,14 +1105,12 @@ async function searchHistoryRecord() {
     recordsList = recordsList.filter(record => {
       const cat = catMap[record.catId];
       if (!cat) return false;
-      
-      // 6 欄位全方位搜尋：貓名、晶片、飼主、手機、身分證、地址
       return (
         cat.name.toLowerCase().includes(key) ||
-        cat.chip.includes(key) ||
+        cat.chip.toLowerCase().includes(key) ||
         cat.owner.toLowerCase().includes(key) ||
-        cat.phone.includes(key) ||
-        cat.ownerId.includes(key) ||
+        cat.phone.toLowerCase().includes(key) ||
+        cat.ownerId.toLowerCase().includes(key) ||
         cat.addr.toLowerCase().includes(key)
       );
     });
