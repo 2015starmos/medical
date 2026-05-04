@@ -1080,46 +1080,51 @@ async function deleteRecord(id) {
 async function searchHistoryRecord() {
   const start = document.getElementById('filterStart').value;
   const end = document.getElementById('filterEnd').value;
-  const key = document.getElementById('filterKey').value.trim().toLowerCase();
+  let key = document.getElementById('filterKey').value.trim();
 
-  const snap = await getDocs(collection(db, 'records'));
-  let recordsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const recordSnap = await getDocs(collection(db, 'records'));
+  let allRecords = recordSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
   const catSnap = await getDocs(collection(db, 'cats'));
   const catMap = {};
   catSnap.docs.forEach(doc => {
     const c = doc.data();
     catMap[doc.id] = {
-      name: (c.name || '').toLowerCase(),
-      owner: (c.owner || '').toLowerCase(),
-      chip: (c.chip || '').toLowerCase(),
-      addr: (c.addr || '').toLowerCase()
+      name: (c.name || ''),
+      chip: (c.chip || ''),
+      owner: (c.owner || ''),
+      phone: (c.phone || ''),
+      ownerId: (c.ownerId || ''),
+      addr: (c.addr || '')
     };
   });
 
-  if (start) recordsList = recordsList.filter(item => item.visitDate >= start);
-  if (end) recordsList = recordsList.filter(item => item.visitDate <= end);
+  if (start) allRecords = allRecords.filter(r => r.visitDate >= start);
+  if (end) allRecords = allRecords.filter(r => r.visitDate <= end);
 
-  if (key) {
-    recordsList = recordsList.filter(record => {
+  if (key !== '') {
+    const kw = key.toLowerCase();
+    allRecords = allRecords.filter(record => {
       const cat = catMap[record.catId];
       if (!cat) return false;
       return (
-        cat.name.includes(key) ||
-        cat.owner.includes(key) ||
-        cat.chip.includes(key) ||
-        cat.addr.includes(key)
+        cat.name.toLowerCase().includes(kw) ||
+        cat.chip.toLowerCase().includes(kw) ||
+        cat.owner.toLowerCase().includes(kw) ||
+        cat.phone.toLowerCase().includes(kw) ||
+        cat.ownerId.toLowerCase().includes(kw) ||
+        cat.addr.toLowerCase().includes(kw)
       );
     });
   }
 
   const tbody = document.getElementById('historyTableBody');
-  if (recordsList.length === 0) {
+  if (allRecords.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">無符合條件的病歷紀錄</td></tr>';
     return;
   }
 
-  tbody.innerHTML = recordsList.map(item => `
+  tbody.innerHTML = allRecords.map(item => `
   <tr>
     <td>${item.visitDate || ''}</td>
     <td>${catMap[item.catId]?.name || '未知動物'}</td>
