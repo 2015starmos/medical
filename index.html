@@ -624,11 +624,9 @@ let editRecordId = null;
 let nowImgList = [];
 let nowImgIndex = 0;
 let remindList = [];
-let currentRecordId = ""; // 新增：当前病歷 ID
-</script>
+let currentRecordId = "";
 
-// ========== 自訂病歷ID生成、顯示 開始 ==========
-// 生成病歷 ID：dc + 西元年月日 + 3位英數亂數
+// 生成病歷 ID：DC + 西元年月日 + 3位英數亂數
 function generateRecordId() {
   const date = new Date();
   const y = date.getFullYear();
@@ -636,21 +634,18 @@ function generateRecordId() {
   const d = String(date.getDate()).padStart(2, '0');
   const dateStr = y + m + d;
 
-  // 3位亂數(排除易混淆字元)
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let rand = "";
   for (let i = 0; i < 3; i++) {
     rand += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-
-  return "dc" + dateStr + rand;
+  return "DC" + dateStr + rand;
 }
 
-// 把自動產生的病歷ID顯示在綁定動物上方
+// 顯示病歷編號
 function showRecordIdBar() {
   let idBox = document.getElementById("recordIdBar");
   if(!idBox) return;
-
   if(currentRecordId){
     idBox.innerHTML = `
     <div style="background:#e6f0ff;border:1px solid #b3d4ff;padding:10px;border-radius:6px;margin-bottom:10px;">
@@ -661,8 +656,6 @@ function showRecordIdBar() {
     idBox.innerHTML = "";
   }
 }
-// ========== 自訂病歷ID生成、顯示 結束 ==========
-
 
 function switchTab(id, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -798,32 +791,30 @@ async function editCat(id) {
   document.getElementById('catNote').value = d.note || '';
 }
 
-// 生成病歷 ID：DC + 西元年月日 + 3位英數亂數
-function generateRecordId() {
-  const date = new Date();
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const dateStr = y + m + d;
+// 綁定動物到病歷
+function bindCat(id, name){
+  currentCatId = id;
+  document.getElementById('bindCatInfo').innerHTML = `
+    ✅ 已綁定動物：<strong>${name}</strong>
+    <button class="btn btn-danger" onclick="unbindCat()" style="margin-left:10px;">❌ 取消綁定</button>
+  `;
 
-  // 3位亂數(排除易混淆字元)
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let rand = "";
-  for (let i = 0; i < 3; i++) {
-    rand += chars.charAt(Math.floor(Math.random() * chars.length));
+  if(!currentRecordId){
+    currentRecordId = generateRecordId();
+    showRecordIdBar();
   }
-
-  return "DC" + dateStr + rand;
 }
 
+// 取消綁定
 function unbindCat(){
   currentCatId = null;
+  currentRecordId = "";
+  showRecordIdBar();
   document.getElementById('bindCatInfo').innerHTML = '尚未綁定動物，請先搜尋並選擇欲建立病歷的動物';
 }
 
 async function searchCatForRecord() {
   const kw = document.getElementById('searchRecordCat').value.toLowerCase().trim();
-  
   const snap = await getDocs(collection(db, 'cats'));
   const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   
@@ -832,22 +823,19 @@ async function searchCatForRecord() {
       (i.name && i.name.toLowerCase().includes(kw)) ||
       (i.chip && i.chip.includes(kw)) ||
       (i.owner && i.owner.toLowerCase().includes(kw)) ||
-      (i.phone && i.phone.includes(kw)) ||
-      (i.ownerId && i.ownerId.includes(kw)) ||
-      (i.addr && i.addr.toLowerCase().includes(kw))
+      (i.phone && i.phone.includes(kw))
     );
   });
 
   let html = '';
   if (res.length > 0) {
-    html = '<table class="data-table"><thead><tr><th>姓名</th><th>晶片號</th><th>飼主</th><th>手機</th><th>地址</th><th>操作</th></tr></thead><tbody>';
+    html = '<table class="data-table"><thead><tr><th>姓名</th><th>晶片號</th><th>飼主</th><th>手機</th><th>操作</th></tr></thead><tbody>';
     html += res.map(i => `
       <tr>
         <td>${i.name || '-'}</td>
         <td>${i.chip || '-'}</td>
         <td>${i.owner || '-'}</td>
         <td>${i.phone || '-'}</td>
-        <td>${i.addr || '-'}</td>
         <td><button class="btn btn-primary" onclick="bindCat('${i.id}','${i.name}')">選擇此動物</button></td>
       </tr>
     `).join('');
@@ -857,10 +845,9 @@ async function searchCatForRecord() {
   }
 
   if(!kw){
-    document.getElementById('bindCatInfo').innerHTML = '尚未綁定動物，請先搜尋並選擇欲建立病歷的動物';
+    unbindCat();
     return;
   }
-
   document.getElementById('bindCatInfo').innerHTML = html;
 }
 
@@ -975,7 +962,7 @@ async function uploadFiles(files, path){
   return urls;
 }
 
-
+// 儲存草稿
 async function saveDraftRecord() {
   if (!currentCatId) {
     alert('❌ 請先綁定就診動物');
@@ -983,9 +970,8 @@ async function saveDraftRecord() {
   }
   if (!confirm('確定要儲存草稿嗎？')) return;
 
-  if(!currentRecordId){
-    currentRecordId = generateRecordId();
-  }
+  if(!currentRecordId) currentRecordId = generateRecordId();
+  showRecordIdBar();
 
   const data = {
     recordId: currentRecordId,
@@ -1012,6 +998,7 @@ async function saveDraftRecord() {
   }
 }
 
+// 儲存正式病歷
 async function saveFullRecord() {
   if (!currentCatId) {
     alert('❌ 請先綁定就診動物！');
@@ -1025,17 +1012,14 @@ async function saveFullRecord() {
     alert('❌ 請選擇就診日期！');
     return;
   }
-
   if (!content) {
     alert('❌ 請填寫症狀/看診內容！');
     return;
   }
 
   if (!confirm('確定儲存病歷？編輯模式會直接覆蓋舊資料')) return;
-
-  if(!currentRecordId){
-    currentRecordId = generateRecordId();
-  }
+  if(!currentRecordId) currentRecordId = generateRecordId();
+  showRecordIdBar();
 
   const examUrls = await uploadFiles(examFiles, `exam/${currentCatId}`);
   const treatUrls = await uploadFiles(treatFiles, `treat/${currentCatId}`);
@@ -1069,6 +1053,7 @@ async function saveFullRecord() {
       alert('✅ 新病歷儲存成功！編號：' + currentRecordId);
     }
     
+    // 清空表單
     drugList = [];
     showDrugList();
     document.getElementById('visitContent').value = '';
@@ -1078,10 +1063,7 @@ async function saveFullRecord() {
     examFiles = [];
     treatFiles = [];
     
-    document.querySelectorAll('.symptom-tag').forEach(tag => {
-      tag.classList.remove('active');
-    });
-
+    document.querySelectorAll('.symptom-tag').forEach(tag => tag.classList.remove('active'));
     currentRecordId = "";
     showRecordIdBar();
     loadRemindList();
@@ -1090,6 +1072,7 @@ async function saveFullRecord() {
   }
 }
 
+// 編輯病歷
 async function editRecord(id) {
   if(!confirm('確定要編輯這筆病歷嗎？')) return;
   
@@ -1103,6 +1086,9 @@ async function editRecord(id) {
   const catName = catSnap.exists() ? catSnap.data().name : '未知動物';
 
   editRecordId = id;
+  currentRecordId = data.recordId || "";
+  showRecordIdBar();
+  
   switchTab('record', document.querySelectorAll('.tab-btn')[1]);
   bindCat(data.catId, catName);
 
@@ -1122,6 +1108,7 @@ async function editRecord(id) {
   alert('✅ 舊病歷已載入，修改後儲存會直接覆蓋舊資料');
 }
 
+// 刪除病歷
 async function deleteRecord(id) {
   if(!confirm('⚠️ 確定要刪除這筆病歷嗎？\n此動作無法復原！')) return;
   
@@ -1135,6 +1122,7 @@ async function deleteRecord(id) {
   }
 }
 
+// 查詢病歷
 async function searchHistoryRecord() {
   const start = document.getElementById('filterStart').value;
   const end = document.getElementById('filterEnd').value;
@@ -1147,32 +1135,18 @@ async function searchHistoryRecord() {
   const catMap = {};
   catSnap.docs.forEach(doc => {
     const c = doc.data();
-    catMap[doc.id] = {
-      name: (c.name || ''),
-      chip: (c.chip || ''),
-      owner: (c.owner || ''),
-      phone: (c.phone || ''),
-      ownerId: (c.ownerId || ''),
-      addr: (c.addr || '')
-    };
+    catMap[doc.id] = { name: c.name || '' };
   });
 
   if (start) allRecords = allRecords.filter(r => r.visitDate >= start);
   if (end) allRecords = allRecords.filter(r => r.visitDate <= end);
 
-  if (key !== '') {
+  if (key) {
     const kw = key.toLowerCase();
     allRecords = allRecords.filter(record => {
       const cat = catMap[record.catId];
       if (!cat) return false;
-      return (
-        cat.name.toLowerCase().includes(kw) ||
-        cat.chip.toLowerCase().includes(kw) ||
-        cat.owner.toLowerCase().includes(kw) ||
-        cat.phone.toLowerCase().includes(kw) ||
-        cat.ownerId.toLowerCase().includes(kw) ||
-        cat.addr.toLowerCase().includes(kw)
-      );
+      return cat.name.toLowerCase().includes(kw);
     });
   }
 
@@ -1198,6 +1172,7 @@ async function searchHistoryRecord() {
   `).join('');
 }
 
+// 查看病歷明細
 async function viewRecordDetail(id){
   const docRef = doc(db,'records',id);
   const snap = await getDoc(docRef);
@@ -1233,35 +1208,29 @@ async function viewRecordDetail(id){
   alert(content);
   nowImgList = data.imgList || [];
   nowImgIndex = 0;
-  if(nowImgList.length > 0){
-    openImgModal(nowImgList[0]);
-  }
+  if(nowImgList.length > 0) openImgModal(nowImgList[0]);
 }
 
+// 體重圖表
 async function loadWeightChart() {
   const kw = document.getElementById('searchWeightCat').value.toLowerCase().trim();
   const resultArea = document.getElementById('weightCatResult');
 
   if (!kw) {
     if (weightChart) weightChart.destroy();
-    if (resultArea) resultArea.innerHTML = '';
+    resultArea.innerHTML = '';
     return;
   }
 
   const catSnap = await getDocs(collection(db, 'cats'));
   const catList = catSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
   const matchedCats = catList.filter(item => 
     (item.name && item.name.toLowerCase().includes(kw)) ||
-    (item.chip && item.chip.includes(kw)) ||
-    (item.owner && item.owner.toLowerCase().includes(kw)) ||
-    (item.phone && item.phone.includes(kw)) ||
-    (item.ownerId && item.ownerId.includes(kw)) ||
-    (item.addr && item.addr.toLowerCase().includes(kw))
+    (i.chip && i.chip.includes(kw))
   );
 
   if (matchedCats.length === 0) {
-    if (resultArea) resultArea.innerHTML = '<div style="padding:10px;">未找到任何貓咪</div>';
+    resultArea.innerHTML = '<div style="padding:10px;">未找到任何貓咪</div>';
     if (weightChart) weightChart.destroy();
     return;
   }
@@ -1270,21 +1239,16 @@ async function loadWeightChart() {
     <div style="margin:15px 0; padding:10px; border:1px solid #ddd; border-radius:6px;">
       <div style="margin-bottom:8px; font-weight:bold; color:#2c5aa0;">✅ 找到以下貓咪，請點擊查看體重：</div>
   `;
-
   matchedCats.forEach(cat => {
     html += `
-      <button 
-        onclick="showWeightForCat('${cat.id}')"
+      <button onclick="showWeightForCat('${cat.id}')"
         style="padding:8px 12px; margin:5px; border-radius:6px; border:none; background:#2c5aa0; color:white; cursor:pointer;">
         ${cat.name} (${cat.owner || '無飼主'})
       </button>
     `;
   });
-
   html += '</div>';
-  if (resultArea) {
-    resultArea.innerHTML = html;
-  }
+  resultArea.innerHTML = html;
 }
 
 window.showWeightForCat = async function(catId) {
@@ -1317,23 +1281,18 @@ window.showWeightForCat = async function(catId) {
     options: {
       responsive: true,
       plugins: {
-        title: { display: true, text: `${cat.name} 體重追蹤曲線圖`, font: { size: 16 } },
-        tooltip: { mode: 'index', intersect: false }
+        title: { display: true, text: `${cat.name} 體重追蹤曲線圖`, font: { size: 16 } }
       },
-      scales: {
-        y: { beginAtZero: false, title: { display: true, text: '體重 (kg)' } },
-        x: { title: { display: true, text: '日期' } }
-      }
+      scales: { y: { beginAtZero: false }, x: { title: { display: true, text: '日期' } } }
     }
   });
 }
 
+// 管理員
 let isAdminLoggedIn = false;
-
 function adminLogin() {
   const acc = document.getElementById('adminAcc').value;
   const pwd = document.getElementById('adminPwd').value;
-
   if (acc === '2015starmos' && pwd === 'ha821208') {
     isAdminLoggedIn = true;
     alert('✅ 管理員登入成功！');
@@ -1343,38 +1302,24 @@ function adminLogin() {
     alert('❌ 帳號或密碼錯誤');
   }
 }
-
 function adminLogout() {
   isAdminLoggedIn = false;
   alert('✅ 已登出管理模式');
   document.getElementById('adminTabBtn').style.display = 'none';
   renderAdminPanel();
 }
-
 function renderAdminPanel() {
   const panel = document.getElementById('adminPanel');
   if (!isAdminLoggedIn) {
-    panel.innerHTML = `
-      <div style="padding:15px;background:#f8d7da;border-radius:6px;">
-        請輸入管理員帳號密碼登入
-      </div>
-    `;
+    panel.innerHTML = `<div style="padding:15px;background:#f8d7da;border-radius:6px;">請輸入管理員帳號密碼登入</div>`;
     return;
   }
-
   panel.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px;">
       <div style="background:#f5f5f5;padding:15px;border-radius:6px;">
         <h4 style="color:var(--primary);margin-bottom:10px;">📦 資料備份 / 還原</h4>
         <button class="btn btn-success" onclick="backupAllData()">💾 備份所有資料</button>
-        <button class="btn btn-primary" onclick="restoreBackup()" style="margin-top:8px;">🔄 從備份還原</button>
       </div>
-
-      <div style="background:#f5f5f5;padding:15px;border-radius:6px;">
-        <h4 style="color:var(--primary);margin-bottom:10px;">🔒 個資保護</h4>
-        <button class="btn btn-outline" onclick="togglePrivacy()">隱藏 / 顯示個資</button>
-      </div>
-
       <div style="background:#f5f5f5;padding:15px;border-radius:6px;">
         <h4 style="color:var(--primary);margin-bottom:10px;">🔐 系統管理</h4>
         <button class="btn btn-danger" onclick="adminLogout()">登出管理員</button>
@@ -1382,50 +1327,26 @@ function renderAdminPanel() {
     </div>
   `;
 }
-
 async function backupAllData() {
   if (!confirm('確認備份所有動物＋病歷資料？')) return;
   try {
     const cats = await getDocs(collection(db, 'cats'));
     const records = await getDocs(collection(db, 'records'));
-    
     const data = {
       cats: cats.docs.map(d => ({ id: d.id, ...d.data() })),
       records: records.docs.map(d => ({ id: d.id, ...d.data() })),
       time: new Date().toLocaleString()
     };
-
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
+    a.href = URL.createObjectURL(blob);
     a.download = `獸醫病歷系統備份_${new Date().getTime()}.json`;
     a.click();
     alert('✅ 備份檔案已下載');
-  } catch (e) {
-    alert('備份失敗：' + e.message);
-  }
+  } catch (e) { alert('備份失敗：' + e.message); }
 }
 
-function restoreBackup() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    const text = await file.text();
-    const data = JSON.parse(text);
-    if (!data.cats || !data.records) return alert('檔案格式錯誤');
-    alert('還原功能已就緒');
-  };
-  input.click();
-}
-
-function togglePrivacy() {
-  document.body.classList.toggle('privacy-mode');
-  alert('已切換個資顯示模式');
-}
-
+// 提醒列表
 async function loadRemindList() {
   remindList = [];
   const snap = await getDocs(collection(db, 'records'));
@@ -1434,45 +1355,27 @@ async function loadRemindList() {
   const catSnap = await getDocs(collection(db, 'cats'));
   const catMap = {};
   catSnap.docs.forEach(c => catMap[c.id] = c.data().name);
-
   const today = new Date();
 
   records.forEach(r => {
     if (r.reVisitDate) {
       const dt = new Date(r.reVisitDate);
       const diff = Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
-      if (diff >= 0) {
-        remindList.push({
-          name: catMap[r.catId] || '未知',
-          type: '回診',
-          date: r.reVisitDate,
-          days: diff
-        });
-      }
+      if (diff >= 0) remindList.push({ name: catMap[r.catId], type: '回診', date: r.reVisitDate, days: diff });
     }
-
     if (r.dewormRemindDate) {
       const dt = new Date(r.dewormRemindDate);
       const diff = Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
-      if (diff >= 0) {
-        remindList.push({
-          name: catMap[r.catId] || '未知',
-          type: '驅蟲',
-          date: r.dewormRemindDate,
-          days: diff
-        });
-      }
+      if (diff >= 0) remindList.push({ name: catMap[r.catId], type: '驅蟲', date: r.dewormRemindDate, days: diff });
     }
   });
 
   remindList.sort((a, b) => a.days - b.days);
-  
   const tbody = document.getElementById("remindTableBody");
   if (remindList.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">目前無任何提醒</td></tr>`;
     return;
   }
-
   tbody.innerHTML = remindList.map((item, index) => `
     <tr class="${item.days <= 7 ? 'warning' : ''}">
       <td>${item.name}</td>
@@ -1482,52 +1385,37 @@ async function loadRemindList() {
       <td>${item.days <= 7 ? '即將到期' : '正常'}</td>
       <td>
         <button class="btn btn-warning" onclick="doneRemind(${index})">✅ 已處理</button>
-        <button class="btn btn-outline" onclick="callOwner()">📞 提醒飼主</button>
       </td>
     </tr>
   `).join('');
 }
-
 function doneRemind(index) {
   if (!confirm("確定已完成此提醒？")) return;
   remindList.splice(index, 1);
   loadRemindList();
 }
 
-function callOwner() {
-  alert("📞 已通知飼主");
-}
-
+// 圖片翻頁
 function prevImg(){
   if(nowImgList.length === 0) return;
-  nowImgIndex --;
-  if(nowImgIndex < 0) nowImgIndex = nowImgList.length - 1;
+  nowImgIndex = (nowImgIndex - 1 + nowImgList.length) % nowImgList.length;
   document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
   updateImgPageNum();
 }
-
 function nextImg(){
   if(nowImgList.length === 0) return;
-  nowImgIndex ++;
-  if(nowImgIndex >= nowImgList.length) nowImgIndex = 0;
+  nowImgIndex = (nowImgIndex + 1) % nowImgList.length;
   document.getElementById('showBigImg').src = nowImgList[nowImgIndex];
   updateImgPageNum();
 }
-
 function updateImgPageNum(){
-  if(nowImgList.length === 0) return;
+  if(!nowImgList.length) return;
   document.getElementById('imgPageNum').innerText = `${nowImgIndex+1} / ${nowImgList.length}`;
 }
 
-function deleteExamPhoto(index) {
-  examFiles.splice(index, 1);
-  previewExamFiles();
-}
-
-function deleteTreatPhoto(index) {
-  treatFiles.splice(index, 1);
-  previewTreatFiles();
-}
+// 刪除預覽圖片
+function deleteExamPhoto(index) { examFiles.splice(index,1); previewExamFiles(); }
+function deleteTreatPhoto(index) { treatFiles.splice(index,1); previewTreatFiles(); }
 
 window.onload = function() {
   const today = new Date().toISOString().split('T')[0];
