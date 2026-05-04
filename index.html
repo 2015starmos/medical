@@ -854,7 +854,7 @@ async function uploadFiles(files, path){
   
   // 使用 Promise.all 並行上傳，顯著提升速度
   const uploadPromises = Array.from(files).map(async (f) => {
-    // 加入隨機字串防止併發時檔名衝突
+    // 加入 6 位隨機字串防止併發上傳時檔名衝突
     const randomStr = Math.random().toString(36).substring(2, 8);
     const fileName = `${path}/${Date.now()}_${randomStr}_${f.name}`;
     const fileRef = ref(storage, fileName);
@@ -905,11 +905,11 @@ async function saveFullRecord() {
   const originalText = saveBtn.innerText;
 
   try {
-    // 鎖定按鈕避免重複觸發
-    saveBtn.innerText = "⏳ 圖片上傳並儲存中...";
+    // 鎖定按鈕避免圖片上傳時重複觸發
+    saveBtn.innerText = "⏳ 圖片上傳中，請稍候...";
     saveBtn.disabled = true;
 
-    // 並行執行兩組上傳任務
+    // 並行執行兩組上傳任務（檢驗與治療照片）
     const [examUrls, treatUrls] = await Promise.all([
       uploadFiles(examFiles, `exam/${currentCatId}`),
       uploadFiles(treatFiles, `treat/${currentCatId}`)
@@ -944,7 +944,7 @@ async function saveFullRecord() {
       alert('✅ 新病歷儲存成功！');
     }
     
-    // 清空表單與預覽
+    // 清空表單
     drugList = [];
     showDrugList();
     document.getElementById('visitContent').value = '';
