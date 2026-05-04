@@ -165,7 +165,7 @@
     </div>
     <div class="nav-menu">
       <a href="#" class="active">🖥️系統首頁</a>
-      <a href="javascript:switchTab('admin', document.querySelectorAll('.tab-btn')[6])">🔧 管理後台</a>
+      <a href="javascript:switchTab('admin', document.querySelectorAll('.tab-btn')[5])">🔧 管理後台</a>
     </div>
   </div>
 
@@ -177,7 +177,6 @@
         <button class="tab-btn" onclick="switchTab('history',this)">🔍 病歷查詢</button>
         <button class="tab-btn" onclick="switchTab('weight',this)">📊 體重追蹤</button>
         <button class="tab-btn" onclick="switchTab('remind',this)">⚠️ 疫苗/回診提醒</button>
-        <button class="tab-btn" onclick="switchTab('favorite',this)">⭐ 常用動物</button>
         <button class="tab-btn" onclick="switchTab('admin',this)">🔧 管理後台</button>
       </div>
 
@@ -496,63 +495,29 @@
           </div>
         </div>
 
-        <div id="remind" class="page">
-          <div class="section">
-            <div class="section-header">
-              <span>疫苗/驅蟲/回診到期提醒 <span style="color:var(--danger);font-size:12px;">(紅色=即將到期)</span></span>
-            </div>
-            <div class="section-body">
-              <table class="data-table" id="remindListShow">
-                <thead>
-                  <tr>
-                    <th>動物姓名</th>
-                    <th>提醒類型</th>
-                    <th>到期日期</th>
-                    <th>剩餘天數</th>
-                    <th>狀態</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="warning"><td>小橘</td><td>狂犬病疫苗</td><td>2025-12-20</td><td>15天</td><td>即將到期</td><td><button class="btn btn-warning">✅ 已處理</button></td></tr>
-                  <tr><td>小黑</td><td>回診檢查</td><td>2026-01-10</td><td>36天</td><td>正常</td><td><button class="btn btn-outline">📞 提醒飼主</button></td></tr>
-                  <tr class="success"><td>小白</td><td>驅蟲</td><td>2026-02-15</td><td>72天</td><td>正常</td><td><button class="btn btn-outline">📞 提醒飼主</button></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div id="favorite" class="page">
-          <div class="section">
-            <div class="section-header">
-              <span>常用動物清單 (一鍵選取)</span>
-            </div>
-            <div class="section-body">
-              <table class="data-table" id="favoriteListShow">
-                <thead>
-                  <tr>
-                    <th>動物姓名</th>
-                    <th>晶片號</th>
-                    <th>飼主</th>
-                    <th>聯繫電話</th>
-                    <th>最近就診</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="highlight" onclick="bindCat('1','小橘')">
-                    <td>小橘</td><td>987654321</td><td>陳先生</td><td>0912345678</td><td>2025-11-20</td>
-                    <td>
-                      <button class="btn btn-primary">📝 建立病歷</button>
-                      <button class="btn btn-outline">🗑️ 移除</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+<div id="remind" class="page">
+  <div class="section">
+    <div class="section-header">
+      <span>疫苗/驅蟲/回診到期提醒 <span style="color:var(--danger);font-size:12px;">(紅色=即將到期)</span></span>
+    </div>
+    <div class="section-body">
+      <table class="data-table" id="remindListShow">
+        <thead>
+          <tr>
+            <th>動物姓名</th>
+            <th>提醒類型</th>
+            <th>到期日期</th>
+            <th>剩餘天數</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="remindTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <div id="admin" class="page">
   <div class="section">
@@ -747,8 +712,7 @@ window.getDownloadURL = getDownloadURL;
           <td>
             <button class="btn btn-outline" onclick="editCat('${i.id}')">✏️ 編輯</button>
             <button class="btn btn-primary" onclick="bindCat('${i.id}','${i.name}')">📝 綁定</button>
-            <button class="btn btn-warning" onclick="toggleFavorite('${i.id}','${i.name}')">⭐ 最愛</button>
-          </td>
+                      </td>
         </tr>
       `).join('');
     }
@@ -1185,53 +1149,6 @@ async function loadWeightChart() {
   });
 }
 
-function toggleFavorite(id, name) {
-  let fav = JSON.parse(localStorage.getItem('favorites') || '[]');
-  const index = fav.findIndex(item => item.id === id);
-
-  if (index > -1) {
-    fav.splice(index, 1);
-    alert(`已將 ${name} 移除我的最愛`);
-  } else {
-    fav.push({ id, name });
-    alert(`已將 ${name} 加入我的最愛`);
-  }
-
-  localStorage.setItem('favorites', JSON.stringify(fav));
-  loadFavoriteList();
-}
-
-async function loadFavoriteList(){
-  let fav = JSON.parse(localStorage.getItem('favorites') || '[]');
-  const tbody = document.querySelector('#favoriteListShow tbody');
-  if(fav.length === 0){
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">尚無常用動物</td></tr>';
-    return;
-  }
-
-  const snap = await getDocs(collection(db,'cats'));
-  const catMap = {};
-  snap.docs.forEach(d=>catMap[d.id] = d.data());
-  
-  tbody.innerHTML = fav.map(item=>{
-    const cat = catMap[item.id];
-    if(!cat) return '';
-    return `
-      <tr class="highlight" onclick="bindCat('${item.id}','${cat.name}')">
-        <td>${cat.name}</td>
-        <td>${cat.chip || '-'}</td>
-        <td>${cat.owner || '-'}</td>
-        <td>${cat.phone || '-'}</td>
-        <td>${localStorage.getItem('lastVisit_'+item.id) || '無'}</td>
-        <td>
-          <button class="btn btn-primary" onclick="bindCat('${item.id}','${cat.name}')">📝 建立病歷</button>
-          <button class="btn btn-outline" onclick="toggleFavorite('${item.id}','${cat.name}')">🗑️ 移除</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
 // 全域變數（加在最上面的變數區一起）
 let isAdminLoggedIn = false;
 
@@ -1340,7 +1257,6 @@ window.onload = function() {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('visitDate').value = today;
   showDrugList();
-  loadFavoriteList();
 
   // 啟動照片拖曳排序
   initPhotoSort();
@@ -1408,6 +1324,48 @@ function deleteTreatPhoto(index) {
   treatFiles.splice(index, 1);
   previewTreatFiles();
 }
-  </script>
+
+// ==============================
+// 疫苗/回診提醒 功能  <--- 貼在這裡！
+// ==============================
+let remindList = [];
+
+function loadRemindList() {
+  const tbody = document.getElementById("remindTableBody");
+  if (!tbody) return;
+
+  if (remindList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">目前無任何提醒</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = remindList.map((item, index) => `
+    <tr class="${item.days <= 7 ? 'warning' : ''}">
+      <td>${item.name}</td>
+      <td>${item.type}</td>
+      <td>${item.date}</td>
+      <td>${item.days} 天</td>
+      <td>${item.days <= 7 ? '即將到期' : '正常'}</td>
+      <td>
+        <button class="btn btn-warning" onclick="doneRemind(${index})">✅ 已處理</button>
+        <button class="btn btn-outline" onclick="callOwner()">📞 提醒飼主</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function doneRemind(index) {
+  if (!confirm("確定已完成此提醒？")) return;
+  remindList.splice(index, 1);
+  loadRemindList();
+}
+
+function callOwner() {
+  alert("📞 已通知飼主");
+}
+
+window.addEventListener("load", loadRemindList);
+
+</script>
 </body>
 </html>
