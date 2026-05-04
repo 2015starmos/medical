@@ -319,6 +319,7 @@
         </div>
       </div>
 
+      <!-- 👇 👇 這裡是我幫你加好的 驅蟲紀錄 欄位 👇 👇 -->
       <div style="margin-top:12px; padding:10px; border-left:4px solid #4CAF50; background:#f9f9f9; border-radius:4px;">
         <h4 style="margin:0 0 8px 0; color:#2c6e2f;">💊 驅蟲紀錄</h4>
         <div class="form-grid">
@@ -779,6 +780,7 @@ async function searchCatForRecord() {
   const snap = await getDocs(collection(db, 'cats'));
   const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   
+  // 全方位雙向模糊搜尋
   const res = list.filter(i => {
     return (
       (i.name && i.name.toLowerCase().includes(kw)) ||
@@ -1054,6 +1056,7 @@ async function editRecord(id) {
   drugList = data.drugs || [];
   showDrugList();
 
+  // 自動回填驅蟲三個欄位
   document.getElementById('dewormMedicine').value = data.dewormMedicine || '';
   document.getElementById('dewormTime').value = data.dewormTime || '';
   document.getElementById('dewormRemindDate').value = data.dewormRemindDate || '';
@@ -1085,14 +1088,12 @@ async function searchHistoryRecord() {
   const catSnap = await getDocs(collection(db, 'cats'));
   const catMap = {};
   catSnap.docs.forEach(doc => {
-    const catData = doc.data();
+    const c = doc.data();
     catMap[doc.id] = {
-      name: (catData.name || ''),
-      owner: (catData.owner || ''),
-      chip: (catData.chip || ''),
-      phone: (catData.phone || ''),
-      ownerId: (catData.ownerId || ''),
-      addr: (catData.addr || '')
+      name: (c.name || '').toLowerCase(),
+      owner: (c.owner || '').toLowerCase(),
+      chip: (c.chip || '').toLowerCase(),
+      addr: (c.addr || '').toLowerCase()
     };
   });
 
@@ -1104,12 +1105,10 @@ async function searchHistoryRecord() {
       const cat = catMap[record.catId];
       if (!cat) return false;
       return (
-        cat.name.toLowerCase().includes(key) ||
-        cat.chip.toLowerCase().includes(key) ||
-        cat.owner.toLowerCase().includes(key) ||
-        cat.phone.toLowerCase().includes(key) ||
-        cat.ownerId.toLowerCase().includes(key) ||
-        cat.addr.toLowerCase().includes(key)
+        cat.name.includes(key) ||
+        cat.owner.includes(key) ||
+        cat.chip.includes(key) ||
+        cat.addr.includes(key)
       );
     });
   }
@@ -1180,15 +1179,18 @@ async function loadWeightChart() {
   const kw = document.getElementById('searchWeightCat').value.toLowerCase().trim();
   const resultArea = document.getElementById('weightCatResult');
 
+  // 清除区域
   if (!kw) {
     if (weightChart) weightChart.destroy();
     if (resultArea) resultArea.innerHTML = '';
     return;
   }
 
+  // 抓全部猫咪
   const catSnap = await getDocs(collection(db, 'cats'));
   const catList = catSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
+  // 6 字段超强搜索
   const matchedCats = catList.filter(item => 
     (item.name && item.name.toLowerCase().includes(kw)) ||
     (item.chip && item.chip.includes(kw)) ||
@@ -1198,12 +1200,14 @@ async function loadWeightChart() {
     (item.addr && item.addr.toLowerCase().includes(kw))
   );
 
+  // 如果没有结果
   if (matchedCats.length === 0) {
     if (resultArea) resultArea.innerHTML = '<div style="padding:10px;">未找到任何猫咪</div>';
     if (weightChart) weightChart.destroy();
     return;
   }
 
+  // 显示猫咪列表（给你点选）
   let html = `
     <div style="margin:15px 0; padding:10px; border:1px solid #ddd; border-radius:6px;">
       <div style="margin-bottom:8px; font-weight:bold; color:#2c5aa0;">✅ 找到以下猫咪，请点击查看体重：</div>
@@ -1225,16 +1229,19 @@ async function loadWeightChart() {
   }
 }
 
+// 点击猫咪 → 显示体重曲线图
 window.showWeightForCat = async function(catId) {
   const catSnap = await getDoc(doc(db, 'cats', catId));
   if (!catSnap.exists()) return;
   const cat = catSnap.data();
 
+  // 抓这只猫的所有病历
   const recSnap = await getDocs(query(collection(db, 'records'), where('catId', '==', catId)));
   const records = recSnap.docs.map(d => d.data())
     .filter(item => item.weight && item.visitDate)
     .sort((a, b) => new Date(a.visitDate) - new Date(b.visitDate));
 
+  // 画图
   const ctx = document.getElementById('weightChartCanvas').getContext('2d');
   if (weightChart) weightChart.destroy();
 
