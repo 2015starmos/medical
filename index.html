@@ -282,6 +282,7 @@
 <div id="record" class="page">
   <div class="section">
     <div class="section-header">
+    <div id="recordIdBar"></div>
       <span>綁定就診動物</span>
     </div>
     <div class="section-body">
@@ -623,6 +624,45 @@ let editRecordId = null;
 let nowImgList = [];
 let nowImgIndex = 0;
 let remindList = [];
+let currentRecordId = ""; // 新增：当前病歷 ID
+</script>
+
+// ========== 自訂病歷ID生成、顯示 開始 ==========
+// 生成病歷 ID：dc + 西元年月日 + 3位英數亂數
+function generateRecordId() {
+  const date = new Date();
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const dateStr = y + m + d;
+
+  // 3位亂數(排除易混淆字元)
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let rand = "";
+  for (let i = 0; i < 3; i++) {
+    rand += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  return "dc" + dateStr + rand;
+}
+
+// 把自動產生的病歷ID顯示在綁定動物上方
+function showRecordIdBar() {
+  let idBox = document.getElementById("recordIdBar");
+  if(!idBox) return;
+
+  if(currentRecordId){
+    idBox.innerHTML = `
+    <div style="background:#e6f0ff;border:1px solid #b3d4ff;padding:10px;border-radius:6px;margin-bottom:10px;">
+      <span style="font-weight:bold;color:#2c5aa0;">📋 本筆病歷編號：${currentRecordId}</span>
+    </div>
+    `;
+  }else{
+    idBox.innerHTML = "";
+  }
+}
+// ========== 自訂病歷ID生成、顯示 結束 ==========
+
 
 function switchTab(id, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -758,14 +798,22 @@ async function editCat(id) {
   document.getElementById('catNote').value = d.note || '';
 }
 
-function bindCat(id, name) {
-  currentCatId = id;
-  document.getElementById('bindCatInfo').innerHTML = `
-    <div style="background:#d4edda;padding:10px;border-radius:4px;color:var(--success);font-weight:bold;">
-      ✅ 已成功綁定：${name} (ID: ${id})
-      <button class="btn btn-outline" style="margin-left:10px;" onclick="unbindCat()">解除綁定</button>
-    </div>
-  `;
+// 生成病歷 ID：DC + 西元年月日 + 3位英數亂數
+function generateRecordId() {
+  const date = new Date();
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const dateStr = y + m + d;
+
+  // 3位亂數(排除易混淆字元)
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let rand = "";
+  for (let i = 0; i < 3; i++) {
+    rand += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  return "DC" + dateStr + rand;
 }
 
 function unbindCat(){
@@ -927,6 +975,7 @@ async function uploadFiles(files, path){
   return urls;
 }
 
+
 async function saveDraftRecord() {
   if (!currentCatId) {
     alert('❌ 請先綁定就診動物');
@@ -934,7 +983,12 @@ async function saveDraftRecord() {
   }
   if (!confirm('確定要儲存草稿嗎？')) return;
 
+  if(!currentRecordId){
+    currentRecordId = generateRecordId();
+  }
+
   const data = {
+    recordId: currentRecordId,
     catId: currentCatId,
     visitDate: document.getElementById('visitDate').value || '',
     reVisitDate: document.getElementById('reVisitDate').value || '',
@@ -952,7 +1006,7 @@ async function saveDraftRecord() {
 
   try {
     await addDoc(collection(db, 'records'), data);
-    alert('✅ 草稿儲存成功');
+    alert('✅ 草稿儲存成功！病歷編號：' + currentRecordId);
   } catch (e) {
     alert('❌ 草稿儲存失敗：' + e.message);
   }
@@ -979,10 +1033,15 @@ async function saveFullRecord() {
 
   if (!confirm('確定儲存病歷？編輯模式會直接覆蓋舊資料')) return;
 
+  if(!currentRecordId){
+    currentRecordId = generateRecordId();
+  }
+
   const examUrls = await uploadFiles(examFiles, `exam/${currentCatId}`);
   const treatUrls = await uploadFiles(treatFiles, `treat/${currentCatId}`);
 
   const data = {
+    recordId: currentRecordId,
     catId: currentCatId,
     visitDate: visitDate,
     reVisitDate: document.getElementById('reVisitDate').value,
@@ -1002,12 +1061,12 @@ async function saveFullRecord() {
   try {
     if(editRecordId){
       await updateDoc(doc(db, 'records', editRecordId), data);
-      alert('✅ 病歷已覆蓋更新完成！');
+      alert('✅ 病歷已覆蓋更新完成！編號：' + currentRecordId);
       editRecordId = null;
     }else{
       data.createTime = new Date().toISOString();
       await addDoc(collection(db, 'records'), data);
-      alert('✅ 新病歷儲存成功！');
+      alert('✅ 新病歷儲存成功！編號：' + currentRecordId);
     }
     
     drugList = [];
@@ -1023,6 +1082,8 @@ async function saveFullRecord() {
       tag.classList.remove('active');
     });
 
+    currentRecordId = "";
+    showRecordIdBar();
     loadRemindList();
   } catch (e) {
     alert('❌ 儲存失敗：' + e.message);
