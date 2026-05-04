@@ -3,353 +3,651 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>獸醫電子病歷系統 - 專業影像版</title>
+  <title>獸醫電子病歷系統 - 專業版</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- 引入 PDF.js 用於 PDF 轉圖片 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';</script>
-  
   <style>
     :root{
-      --primary:#2c5aa0; --secondary:#f9a825; --success:#2ecc71;
-      --danger:#e74c3c; --info:#3498db; --gray-light:#f5f5f5;
-      --gray:#ddd; --text:#333; --white:#fff;
+      --primary:#2c5aa0;
+      --secondary:#f9a825;
+      --success:#2ecc71;
+      --danger:#e74c3c;
+      --info:#3498db;
+      --warning:#f3910a;
+      --gray-light:#f5f5f5;
+      --gray:#ddd;
+      --gray-dark:#999;
+      --text:#333;
+      --white:#fff;
+      --black:#222;
     }
-    *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft JhengHei", sans-serif;}
-    body{background:#f0f2f5;color:var(--text);font-size:13px;line-height:1.4;}
-    .header{background:linear-gradient(135deg, var(--primary), #1a3d7a); color:var(--white); padding:12px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100;}
-    .container{max-width:1600px; margin:15px auto; padding:0 10px;}
-    .tab-header{display:flex; background:var(--gray-light); border:1px solid var(--gray); border-radius:6px 6px 0 0;}
-    .tab-btn{padding:12px 20px; border:none; background:transparent; cursor:pointer; font-weight:bold; border-right:1px solid var(--gray);}
-    .tab-btn.active{background:var(--primary); color:var(--white);}
-    .tab-content{background:var(--white); border:1px solid var(--gray); border-top:none; padding:20px; border-radius:0 0 6px 6px;}
-    .page{display:none;} .page.active{display:block;}
-    .section{border:1px solid var(--gray); border-radius:6px; margin-bottom:20px; overflow:hidden;}
-    .section-header{padding:10px 15px; background:#f8f9fa; border-bottom:1px solid var(--gray); font-weight:bold; color:var(--primary); display:flex; justify-content:space-between;}
-    .section-body{padding:15px;}
-    .form-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:15px;}
-    input, select, textarea{width:100%; padding:8px; border:1px solid var(--gray); border-radius:4px;}
-    .btn{padding:8px 16px; border-radius:4px; border:none; cursor:pointer; font-weight:bold; display:inline-flex; align-items:center; gap:5px;}
-    .btn-primary{background:var(--primary); color:white;}
-    .btn-success{background:var(--success); color:white;}
-    .btn-danger{background:var(--danger); color:white;}
-    .btn-outline{background:transparent; border:1px solid var(--primary); color:var(--primary);}
-    
-    /* 照片排序樣式 */
-    .photo-grid{display:flex; flex-wrap:wrap; gap:12px; margin-top:10px;}
-    .photo-item{width:140px; background:#fff; border:1px solid var(--gray); padding:5px; border-radius:4px; position:relative;}
-    .photo-item img{width:100%; height:120px; object-fit:cover; cursor:pointer; border-radius:2px;}
-    .sort-controls{display:flex; justify-content:space-between; margin-top:5px; gap:2px;}
-    .sort-btn{flex:1; padding:3px; font-size:10px; background:#eee; border:1px solid #ccc; cursor:pointer; border-radius:2px;}
-    .sort-btn:hover{background:var(--primary); color:white;}
 
-    /* 燈箱樣式 */
-    .modal{position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; z-index:9999; align-items:center; justify-content:center;}
-    .modal-content{position:relative; max-width:90%; max-height:90%;}
-    .modal-img{max-width:100%; max-height:85vh; border:3px solid white;}
-    .modal-nav{position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.2); color:white; border:none; font-size:40px; padding:20px; cursor:pointer; border-radius:50%;}
-    .modal-nav:hover{background:rgba(255,255,255,0.4);}
-    .modal-prev{left:-80px;} .modal-next{right:-80px;}
+    *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft JhengHei", "Arial", sans-serif;}
+    body{background:#f0f2f5;color:var(--text);font-size:13px;line-height:1.4;}
     
-    .data-table{width:100%; border-collapse:collapse;}
-    .data-table th, .data-table td{padding:10px; border:1px solid var(--gray); text-align:left;}
+    .header{
+      background:linear-gradient(135deg, var(--primary), #1a3d7a);
+      color:var(--white);
+      padding:12px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      box-shadow:0 2px 8px rgba(0,0,0,0.15);
+      position:sticky;
+      top:0;
+      z-index:100;
+    }
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo img{width:40px;height:40px;border-radius:50%;}
+    .logo h1{font-size:18px;font-weight:bold;}
+    .nav-menu{display:flex;gap:15px;}
+    .nav-menu a{color:var(--white);text-decoration:none;padding:6px 12px;border-radius:4px;transition:0.2s;}
+    .nav-menu a:hover{background:rgba(255,255,255,0.2);}
+    .nav-menu a.active{background:var(--secondary);color:var(--black);font-weight:bold;}
+
+    .container{max-width:1600px;margin:15px auto;padding:0 10px;}
+    
+    .tab-container{background:var(--white);border:1px solid var(--gray);border-radius:6px;margin-bottom:15px;}
+    .tab-header{display:flex;border-bottom:1px solid var(--gray);background:var(--gray-light);}
+    .tab-btn{
+      padding:10px 20px;border:none;background:transparent;cursor:pointer;
+      font-size:13px;font-weight:500;border-right:1px solid var(--gray);
+      transition:0.2s;
+    }
+    .tab-btn:hover{background:rgba(44,90,160,0.1);}
+    .tab-btn.active{
+      background:var(--primary);color:var(--white);
+      position:relative;
+    }
+    .tab-btn.active::after{
+      content:'';position:absolute;bottom:-1px;left:0;width:100%;height:2px;background:var(--secondary);
+    }
+    .tab-content{padding:15px;}
+    .page{display:none;}
+    .page.active{display:block;animation:fadeIn 0.3s ease;}
+
+    .section{
+      background:var(--white);border:1px solid var(--gray);border-radius:6px;
+      margin-bottom:15px;box-shadow:0 1px 3px rgba(0,0,0,0.05);
+    }
+    .section-header{
+      padding:10px 15px;border-bottom:1px solid var(--gray);
+      background:linear-gradient(to right, var(--primary), #3b6bb3);
+      color:var(--white);font-weight:bold;display:flex;
+      justify-content:space-between;align-items:center;
+    }
+    .section-body{padding:15px;}
+    
+    .data-table{width:100%;border-collapse:collapse;margin:10px 0;}
+    .data-table th{
+      background:var(--gray-light);padding:8px 6px;text-align:center;
+      border:1px solid var(--gray);font-weight:bold;color:var(--primary);
+    }
+    .data-table td{
+      padding:8px 6px;border:1px solid var(--gray);text-align:left;
+      vertical-align:middle;
+    }
+    .data-table tr:hover{background:rgba(44,90,160,0.05);}
+
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0;}
+    .form-group{margin:8px 0;}
+    .form-group label{display:block;margin-bottom:4px;font-weight:bold;color:var(--primary);}
+    input,select,textarea{
+      width:100%;padding:7px 10px;border:1px solid var(--gray);
+      border-radius:4px;font-size:13px;transition:0.2s;
+    }
+    input:focus,select:focus,textarea:focus{
+      outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(44,90,160,0.2);
+    }
+
+    .btn{
+      padding:7px 15px;border-radius:4px;border:none;cursor:pointer;
+      font-size:12px;font-weight:bold;transition:0.2s;
+      display:inline-flex;align-items:center;gap:5px;
+    }
+    .btn-primary{background:var(--primary);color:var(--white);}
+    .btn-success{background:var(--success);color:var(--white);}
+    .btn-danger{background:var(--danger);color:var(--white);}
+    .btn-warning{background:var(--warning);color:var(--white);}
+    .btn-outline{background:transparent;border:1px solid var(--primary);color:var(--primary);}
+
+    .symptom-tags{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;}
+    .symptom-tag{
+      padding:5px 12px;background:var(--gray-light);border-radius:20px;
+      font-size:12px;cursor:pointer;border:1px solid var(--gray);
+    }
+    .symptom-tag.active{background:var(--primary);color:var(--white);}
+
+    .photo-grid{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;}
+    .photo-item{
+      width:120px;height:120px;border:1px solid var(--gray);
+      border-radius:4px;overflow:hidden;background:var(--gray-light);
+      position:relative;
+    }
+    .photo-item img{width:100%;height:100%;object-fit:cover;cursor:pointer;}
+
+    .modal{
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      background:rgba(0,0,0,0.8);display:none;z-index:9999;
+      align-items:center;justify-content:center;
+    }
+    .modal-content{max-width:90%;max-height:85vh;}
+    .modal-img{max-width:100%;max-height:85vh;border-radius:6px;border:3px solid var(--white);}
+
+    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
   </style>
 </head>
 <body>
-
-<div class="header">
-  <h2>獸醫電子病歷系統</h2>
-  <button class="btn btn-primary" onclick="adminLogin()">🔐 管理登入</button>
-</div>
-
-<div class="container">
-  <div class="tab-header">
-    <button class="tab-btn active" onclick="switchTab('cat', this)">🐱 動物基本資料</button>
-    <button class="tab-btn" onclick="switchTab('record', this)">📝 建立病歷紀錄</button>
-    <button class="tab-btn" onclick="switchTab('history', this)">🔍 病歷查詢</button>
+  <div class="header">
+    <div class="logo">
+      <img src="https://via.placeholder.com/40/2c5aa0/ffffff?text=SV" alt="SMARTVET">
+      <h1>獸醫電子病歷系統</h1>
+    </div>
+    <div class="nav-menu">
+      <a href="#" class="active">🖥️ 系統首頁</a>
+      <button class="tab-btn" id="adminTabBtn" onclick="switchTab('admin',this)" style="display:none; color:white;">⚙️ 管理員</button>
+    </div>
   </div>
 
-  <div class="tab-content">
-    <!-- 動物資料 -->
-    <div id="cat" class="page active">
-      <div class="section">
-        <div class="section-header"><span>編輯動物資料</span><button class="btn btn-outline" onclick="clearCatForm()">清空</button></div>
-        <div class="section-body">
-          <input type="hidden" id="editCatId">
-          <div class="form-grid">
-            <div><label>動物姓名</label><input type="text" id="catName"></div>
-            <div><label>晶片號碼</label><input type="text" id="chipId"></div>
-            <div><label>飼主姓名</label><input type="text" id="ownerName"></div>
-            <div><label>手機</label><input type="text" id="ownerPhone"></div>
-            <div><label>居住地址</label><input type="text" id="ownerAddr"></div>
-          </div>
-          <button class="btn btn-primary" onclick="saveCatData()">💾 儲存資料</button>
-        </div>
+  <div class="container">
+    <div class="tab-container">
+      <div class="tab-header">
+        <button class="tab-btn active" onclick="switchTab('cat',this)">🐱 動物基本資料</button>
+        <button class="tab-btn" onclick="switchTab('record',this)">📝 建立病歷紀錄</button>
+        <button class="tab-btn" onclick="switchTab('history',this)">🔍 病歷查詢</button>
+        <button class="tab-btn" onclick="switchTab('weight',this)">📊 體重追蹤</button>
+        <button class="tab-btn" onclick="switchTab('remind',this)">⚠️ 到期提醒</button>
       </div>
-      <div class="section">
-        <div class="section-body">
-          <input type="text" placeholder="搜尋動物..." oninput="searchCatAll(this.value)">
-          <table class="data-table" style="margin-top:10px;">
-            <thead><tr><th>姓名</th><th>飼主</th><th>操作</th></tr></thead>
-            <tbody id="catTableBody"></tbody>
-          </table>
+
+      <div class="tab-content">
+        <!-- 動物資料分頁 -->
+        <div id="cat" class="page active">
+          <div class="section">
+            <div class="section-header">
+              <span>新增/編輯動物基本資料</span>
+              <button class="btn btn-outline" onclick="clearCatForm()">🗑️ 清空表單</button>
+            </div>
+            <div class="section-body">
+              <input type="hidden" id="editCatId">
+              <div class="form-grid">
+                <div class="form-group"><label>動物姓名</label><input type="text" id="catName"></div>
+                <div class="form-group"><label>晶片號碼</label><input type="text" id="chipId"></div>
+                <div class="form-group">
+                  <label>性別</label>
+                  <select id="catGender"><option value="公">公</option><option value="母">母</option></select>
+                </div>
+                <div class="form-group"><label>品種</label><input type="text" id="catBreed"></div>
+                <div class="form-group"><label>出生日期</label><input type="date" id="catBirth"></div>
+                <div class="form-group">
+                  <label>結紮狀態</label>
+                  <select id="catNeuter"><option value="未結紮">未結紮</option><option value="已結紮">已結紮</option></select>
+                </div>
+                <div class="form-group"><label>飼主姓名</label><input type="text" id="ownerName"></div>
+                <div class="form-group"><label>飼主手機</label><input type="text" id="ownerPhone"></div>
+                <div class="form-group"><label>備用電話</label><input type="text" id="ownerPhone2"></div>
+                <div class="form-group"><label>飼主身分證</label><input type="text" id="ownerId"></div>
+                <div class="form-group"><label>居住地址</label><input type="text" id="ownerAddr"></div>
+              </div>
+              <div class="form-group">
+                <label>備註資訊</label>
+                <textarea id="catNote" placeholder="過敏、病史等"></textarea>
+              </div>
+              <button class="btn btn-primary" onclick="saveCatData()">💾 儲存基本資料</button>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section-header"><span>快速搜尋動物</span></div>
+            <div class="section-body">
+              <input type="text" id="searchCatInput" placeholder="輸入關鍵字立即搜尋" oninput="searchCatAll()">
+              <table class="data-table">
+                <thead>
+                  <tr><th>姓名</th><th>晶片</th><th>性別</th><th>飼主</th><th>電話</th><th>操作</th></tr>
+                </thead>
+                <tbody id="catTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 建立病歷分頁 -->
+        <div id="record" class="page">
+          <div id="recordIdBar"></div>
+          <div class="section">
+            <div class="section-header"><span>1. 綁定就診動物</span></div>
+            <div class="section-body">
+              <input type="text" id="searchRecordCat" placeholder="搜尋姓名/晶片/飼主/電話" oninput="searchCatForRecord()">
+              <div id="bindCatInfo" style="margin-top:10px; padding:10px; border:1px dashed #ccc;">尚未綁定動物</div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section-header"><span>2. 就診內容</span></div>
+            <div class="section-body">
+              <div class="form-grid">
+                <div class="form-group"><label>就診日期</label><input type="date" id="visitDate"></div>
+                <div class="form-group"><label>回診日期</label><input type="date" id="reVisitDate"></div>
+                <div class="form-group"><label>體重 (kg)</label><input type="number" id="nowWeight" step="0.01"></div>
+              </div>
+              <div class="form-group">
+                <label>症狀描述</label>
+                <textarea id="visitContent"></textarea>
+                <div class="symptom-tags">
+                  <span class="symptom-tag" onclick="addSymptom(this)">嘔吐</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">腹瀉</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">食慾差</span>
+                  <span class="symptom-tag" onclick="addSymptom(this)">精神萎靡</span>
+                </div>
+              </div>
+              <div style="background:#e8f5e9; padding:10px; border-radius:4px; margin-top:10px;">
+                <h4 style="color:#2e7d32; margin-bottom:5px;">💊 驅蟲計畫</h4>
+                <div class="form-grid">
+                  <div class="form-group"><label>藥名</label><input type="text" id="dewormMedicine"></div>
+                  <div class="form-group"><label>下次提醒日期</label><input type="date" id="dewormRemindDate"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section-header"><span>3. 用藥紀錄</span><button class="btn btn-success" onclick="addDrugItem()">+ 新增</button></div>
+            <div class="section-body">
+              <div class="form-grid">
+                <input type="text" id="drugName" placeholder="藥名">
+                <input type="text" id="drugDose" placeholder="劑量">
+                <input type="text" id="drugTimes" placeholder="次數">
+              </div>
+              <table class="data-table">
+                <thead><tr><th>藥名</th><th>劑量</th><th>次數</th><th>操作</th></tr></thead>
+                <tbody id="drugTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-warning" style="flex:1" onclick="saveDraftRecord()">💾 儲存草稿</button>
+            <button class="btn btn-success" style="flex:1" onclick="saveFullRecord()">📋 儲存正式病歷</button>
+          </div>
+        </div>
+
+        <!-- 病歷查詢分頁 -->
+        <div id="history" class="page">
+          <div class="section">
+            <div class="section-header"><span>進階關聯搜尋 (支援地址/身分證/手機/晶片)</span></div>
+            <div class="section-body">
+              <div class="form-grid">
+                <div class="form-group"><label>日期起</label><input type="date" id="filterStart"></div>
+                <div class="form-group"><label>日期迄</label><input type="date" id="filterEnd"></div>
+                <div class="form-group">
+                  <label>綜合關鍵字</label>
+                  <input type="text" id="filterKey" placeholder="搜尋貓名/飼主/手機/身分證/地址">
+                </div>
+                <div class="form-group" style="align-self:end;">
+                  <button class="btn btn-primary" onclick="searchHistoryRecord()">🔍 執行查詢</button>
+                </div>
+              </div>
+              <table class="data-table">
+                <thead>
+                  <tr><th>日期</th><th>動物/病歷ID</th><th>體重</th><th>飼主/摘要</th><th>回診</th><th>操作</th></tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 體重追蹤 -->
+        <div id="weight" class="page">
+          <div class="section">
+            <div class="section-header"><span>體重趨勢圖</span></div>
+            <div class="section-body">
+              <input type="text" id="searchWeightCat" placeholder="輸入貓名顯示曲線" oninput="loadWeightChart()">
+              <div id="weightCatResult"></div>
+              <canvas id="weightChartCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 提醒提醒 -->
+        <div id="remind" class="page">
+          <div class="section">
+            <div class="section-header"><span>到期提醒列表</span></div>
+            <div class="section-body">
+              <table class="data-table">
+                <thead><tr><th>姓名</th><th>類型</th><th>到期日</th><th>剩餘天數</th><th>操作</th></tr></thead>
+                <tbody id="remindTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 管理員 -->
+        <div id="admin" class="page">
+          <div class="section">
+            <div class="section-header"><span>管理登入</span></div>
+            <div class="section-body">
+              <input type="text" id="adminAcc" placeholder="帳號">
+              <input type="password" id="adminPwd" placeholder="密碼">
+              <button class="btn btn-primary" onclick="adminLogin()">🔐 登入</button>
+              <div id="adminPanel"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-
-    <!-- 建立病歷 -->
-    <div id="record" class="page">
-      <div id="recordIdBar"></div>
-      <div class="section">
-        <div class="section-header">1. 綁定動物</div>
-        <div class="section-body">
-          <input type="text" placeholder="搜尋貓名/手機/晶片..." oninput="searchCatForRecord(this.value)">
-          <div id="bindCatInfo" style="margin-top:10px; padding:10px; border:1px dashed #ccc;">請先選擇動物</div>
-        </div>
-      </div>
-      <div class="section">
-        <div class="section-header">2. 診斷與影像</div>
-        <div class="section-body">
-          <div class="form-grid">
-            <div><label>就診日期</label><input type="date" id="visitDate"></div>
-            <div><label>體重 (kg)</label><input type="number" id="nowWeight" step="0.01"></div>
-          </div>
-          <textarea id="visitContent" rows="4" placeholder="診斷內容..."></textarea>
-          
-          <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
-            <label><b>📷 上傳檢驗照片 / PDF (自動轉圖)</b></label>
-            <input type="file" id="examUpload" accept="image/*,application/pdf" multiple onchange="handleFileUpload(this)" style="margin-top:5px;">
-            <div id="examPhotoGrid" class="photo-grid"></div>
-          </div>
-        </div>
-      </div>
-      <button class="btn btn-success" style="width:100%; padding:15px;" onclick="saveFullRecord()">📋 儲存病歷紀錄</button>
-    </div>
-
-    <!-- 病歷查詢 -->
-    <div id="history" class="page">
-      <div class="section">
-        <div class="section-body">
-          <div class="form-grid">
-            <input type="text" id="filterKey" placeholder="關鍵字搜尋(姓名/手機/地址/晶片)...">
-            <button class="btn btn-primary" onclick="searchHistoryRecord()">🔍 查詢</button>
-          </div>
-          <table class="data-table">
-            <thead><tr><th>日期</th><th>動物</th><th>摘要</th><th>操作</th></tr></thead>
-            <tbody id="historyTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
   </div>
-</div>
 
-<!-- 燈箱播放器 -->
-<div class="modal" id="imgModal">
-  <div class="modal-content">
-    <button class="modal-nav modal-prev" onclick="changeModalImg(-1)">❮</button>
-    <img id="showBigImg" class="modal-img">
-    <button class="modal-nav modal-next" onclick="changeModalImg(1)">❯</button>
-  </div>
-  <button style="position:absolute; top:30px; right:30px; color:white; font-size:30px; background:none; border:none; cursor:pointer;" onclick="closeImgModal()">✕</button>
-</div>
+  <div class="modal" id="imgModal" onclick="closeImgModal()"><img id="showBigImg" class="modal-img"></div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  <!-- Firebase 模組 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, where, query, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyB2yEi76WZfALxNkInhG5oG_0LMlNqDgH0",
-    authDomain: "nibo-medical.firebaseapp.com",
-    projectId: "nibo-medical",
-    storageBucket: "nibo-medical.firebasestorage.app",
-    messagingSenderId: "832769973754",
-    appId: "1:832769973754:web:9e7782b36bfc89d02a5843"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyB2yEi76WZfALxNkInhG5oG_0LMlNqDgH0",
+      authDomain: "nibo-medical.firebaseapp.com",
+      projectId: "nibo-medical",
+      storageBucket: "nibo-medical.firebasestorage.app",
+      messagingSenderId: "832769973754",
+      appId: "1:832769973754:web:9e7782b36bfc89d02a5843"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  window.db = db; window.collection = collection; window.addDoc = addDoc;
-  window.getDocs = getDocs; window.doc = doc; window.updateDoc = updateDoc;
-  window.deleteDoc = deleteDoc; window.getDoc = getDoc;
-</script>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-<script>
-  let currentCatId = null;
-  let currentRecordId = "";
-  let editRecordId = null;
-  let currentExamPhotos = []; // 儲存 Base64 圖片陣列
-  let currentModalIdx = 0;
+    // 全域變數供原生 JS 使用
+    window.db = db;
+    window.collection = collection;
+    window.addDoc = addDoc;
+    window.getDocs = getDocs;
+    window.doc = doc;
+    window.updateDoc = updateDoc;
+    window.deleteDoc = deleteDoc;
+    window.where = where;
+    window.query = query;
+    window.getDoc = getDoc;
+  </script>
 
-  function switchTab(id, btn) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    btn.classList.add('active');
-  }
+  <script>
+    let currentCatId = null;
+    let currentRecordId = "";
+    let drugList = [];
+    let editRecordId = null;
+    let weightChart = null;
 
-  // --- 圖片處理與排序 ---
-  async function handleFileUpload(input) {
-    const files = Array.from(input.files);
-    for (const file of files) {
-      if (file.type === "application/pdf") {
-        const dataUrl = await convertPdfToJpg(file);
-        currentExamPhotos.push(dataUrl);
-      } else {
-        const dataUrl = await readFileAsDataURL(file);
-        currentExamPhotos.push(dataUrl);
+    // 分頁切換
+    function switchTab(id, btn) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    // 生成 ID
+    function generateRecordId() {
+      const d = new Date();
+      const dateStr = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+      return "DC" + dateStr + Math.random().toString(36).substr(2,3).toUpperCase();
+    }
+
+    function showRecordIdBar() {
+      const box = document.getElementById("recordIdBar");
+      box.innerHTML = currentRecordId ? `<div style="background:#e3f2fd; padding:10px; border-radius:4px; margin-bottom:10px; color:#1565c0; font-weight:bold;">📋 當前病歷編號：${currentRecordId}</div>` : "";
+    }
+
+    // 動物資料管理
+    async function saveCatData() {
+      const id = document.getElementById('editCatId').value;
+      const data = {
+        name: document.getElementById('catName').value,
+        chip: document.getElementById('chipId').value,
+        gender: document.getElementById('catGender').value,
+        breed: document.getElementById('catBreed').value,
+        birth: document.getElementById('catBirth').value,
+        neuter: document.getElementById('catNeuter').value,
+        owner: document.getElementById('ownerName').value,
+        phone: document.getElementById('ownerPhone').value,
+        phone2: document.getElementById('ownerPhone2').value,
+        ownerId: document.getElementById('ownerId').value,
+        addr: document.getElementById('ownerAddr').value,
+        note: document.getElementById('catNote').value,
+        updateTime: new Date().toISOString()
+      };
+      if(!data.name || !data.owner) return alert("姓名與飼主必填");
+      try {
+        if(id) {
+          await updateDoc(doc(db, 'cats', id), data);
+          alert("更新成功");
+        } else {
+          await addDoc(collection(db, 'cats'), data);
+          alert("新增成功");
+        }
+        clearCatForm();
+        searchCatAll();
+      } catch(e) { alert(e.message); }
+    }
+
+    async function searchCatAll() {
+      const kw = document.getElementById('searchCatInput').value.toLowerCase();
+      const snap = await getDocs(collection(db, 'cats'));
+      const list = snap.docs.map(d => ({id:d.id, ...d.data()})).filter(c => 
+        (c.name||"").toLowerCase().includes(kw) || (c.owner||"").toLowerCase().includes(kw) || (c.phone||"").includes(kw)
+      );
+      document.getElementById('catTableBody').innerHTML = list.map(c => `
+        <tr>
+          <td>${c.name}</td><td>${c.chip||'-'}</td><td>${c.gender}</td><td>${c.owner}</td><td>${c.phone}</td>
+          <td>
+            <button class="btn btn-outline" onclick="editCat('${c.id}')">✏️</button>
+            <button class="btn btn-primary" onclick="bindCat('${c.id}','${c.name}')">📝 綁定</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function editCat(id) {
+      const snap = await getDoc(doc(db, 'cats', id));
+      const d = snap.data();
+      document.getElementById('editCatId').value = id;
+      document.getElementById('catName').value = d.name;
+      document.getElementById('chipId').value = d.chip;
+      document.getElementById('ownerName').value = d.owner;
+      document.getElementById('ownerPhone').value = d.phone;
+      document.getElementById('ownerId').value = d.ownerId;
+      document.getElementById('ownerAddr').value = d.addr;
+      document.getElementById('catNote').value = d.note;
+    }
+
+    function clearCatForm() {
+      document.getElementById('editCatId').value = '';
+      document.querySelectorAll('#cat input').forEach(i => i.value = '');
+    }
+
+    // 病歷綁定
+    function bindCat(id, name) {
+      currentCatId = id;
+      currentRecordId = generateRecordId();
+      document.getElementById('bindCatInfo').innerHTML = `✅ 已綁定：<strong>${name}</strong> <button class="btn btn-danger" onclick="unbindCat()">取消</button>`;
+      showRecordIdBar();
+    }
+
+    function unbindCat() {
+      currentCatId = null; currentRecordId = "";
+      document.getElementById('bindCatInfo').innerHTML = "尚未綁定動物";
+      showRecordIdBar();
+    }
+
+    async function searchCatForRecord() {
+      const kw = document.getElementById('searchRecordCat').value.toLowerCase().trim();
+      if(!kw) return;
+      const snap = await getDocs(collection(db, 'cats'));
+      const res = snap.docs.map(d => ({id:d.id, ...d.data()})).filter(c => 
+        (c.name||"").toLowerCase().includes(kw) || (c.chip||"").includes(kw) || (c.owner||"").toLowerCase().includes(kw) || (c.phone||"").includes(kw)
+      );
+      let html = res.map(c => `<div style="padding:5px; border-bottom:1px solid #eee;">${c.name} (${c.owner}) <button class="btn btn-primary" onclick="bindCat('${c.id}','${c.name}')">選擇</button></div>`).join('');
+      document.getElementById('bindCatInfo').innerHTML = html || "找無動物";
+    }
+
+    // 用藥
+    function addDrugItem() {
+      const n = document.getElementById('drugName').value;
+      if(!n) return;
+      drugList.push({name:n, dose:document.getElementById('drugDose').value, times:document.getElementById('drugTimes').value});
+      showDrugList();
+    }
+    function showDrugList() {
+      document.getElementById('drugTableBody').innerHTML = drugList.map((d,i) => `<tr><td>${d.name}</td><td>${d.dose}</td><td>${d.times}</td><td><button onclick="drugList.splice(${i},1);showDrugList();">刪除</button></td></tr>`).join('');
+    }
+
+    // 關鍵修正：病歷查詢關聯邏輯
+    async function searchHistoryRecord() {
+      const start = document.getElementById('filterStart').value;
+      const end = document.getElementById('filterEnd').value;
+      const key = document.getElementById('filterKey').value.trim().toLowerCase();
+
+      try {
+        // 1. 抓取所有貓咪建立索引
+        const catSnap = await getDocs(collection(db, 'cats'));
+        const allCats = catSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        // 2. 找出匹配關鍵字的貓咪 ID (多欄位比對)
+        const matchedIds = allCats.filter(c => {
+          if (!key) return true;
+          return (
+            (c.name && c.name.toLowerCase().includes(key)) ||
+            (c.chip && c.chip.includes(key)) ||
+            (c.owner && c.owner.toLowerCase().includes(key)) ||
+            (c.phone && c.phone.includes(key)) ||
+            (c.ownerId && c.ownerId.toLowerCase().includes(key)) ||
+            (c.addr && c.addr.toLowerCase().includes(key))
+          );
+        }).map(c => c.id);
+
+        const catMap = {};
+        allCats.forEach(c => catMap[c.id] = c);
+
+        // 3. 抓取病歷並過濾
+        const recSnap = await getDocs(collection(db, 'records'));
+        let filtered = recSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        filtered = filtered.filter(r => {
+          const isCatMatch = matchedIds.includes(r.catId);
+          let isDateMatch = true;
+          if (start && r.visitDate < start) isDateMatch = false;
+          if (end && r.visitDate > end) isDateMatch = false;
+          return isCatMatch && isDateMatch;
+        });
+
+        filtered.sort((a,b) => new Date(b.visitDate) - new Date(a.visitDate));
+
+        // 4. 渲染
+        const tbody = document.getElementById('historyTableBody');
+        if (filtered.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">找無相關病歷</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = filtered.map(r => {
+          const c = catMap[r.catId] || {};
+          return `
+            <tr>
+              <td>${r.visitDate}</td>
+              <td><strong>${c.name||'未知'}</strong><br><small style="color:#666;">ID: ${r.recordId||'未編號'}</small></td>
+              <td>${r.weight||'-'}</td>
+              <td><div style="font-size:11px; color:blue;">飼主: ${c.owner||'-'}</div>${(r.content||'').substring(0,20)}...</td>
+              <td>${r.reVisitDate||'-'}</td>
+              <td>
+                <button class="btn btn-outline" onclick="viewRecordDetail('${r.id}')">📄</button>
+                <button class="btn btn-primary" onclick="editRecord('${r.id}')">✏️</button>
+                <button class="btn btn-danger" onclick="deleteRecord('${r.id}')">🗑️</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch(e) { alert("搜尋失敗: " + e.message); }
+    }
+
+    // 儲存病歷
+    async function saveFullRecord() {
+      if(!currentCatId) return alert("請先綁定動物");
+      const data = {
+        recordId: currentRecordId,
+        catId: currentCatId,
+        visitDate: document.getElementById('visitDate').value,
+        reVisitDate: document.getElementById('reVisitDate').value,
+        weight: document.getElementById('nowWeight').value,
+        content: document.getElementById('visitContent').value,
+        drugs: drugList,
+        dewormMedicine: document.getElementById('dewormMedicine').value,
+        dewormRemindDate: document.getElementById('dewormRemindDate').value,
+        createTime: new Date().toISOString()
+      };
+      try {
+        if(editRecordId) {
+          await updateDoc(doc(db, 'records', editRecordId), data);
+        } else {
+          await addDoc(collection(db, 'records'), data);
+        }
+        alert("病歷已儲存");
+        location.reload();
+      } catch(e) { alert(e.message); }
+    }
+
+    async function deleteRecord(id) {
+      if(confirm("確定刪除？")) {
+        await deleteDoc(doc(db, 'records', id));
+        searchHistoryRecord();
       }
     }
-    renderPhotoGrid();
-    input.value = "";
-  }
 
-  function readFileAsDataURL(file) {
-    return new Promise((res) => {
-      const reader = new FileReader();
-      reader.onload = (e) => res(e.target.result);
-      reader.readAsDataURL(file);
-    });
-  }
+    function viewRecordDetail(id) {
+      alert("請點擊編輯查看完整內容，或檢查 Console");
+    }
 
-  async function convertPdfToJpg(file) {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-    const page = await pdf.getPage(1); // 抓第一頁
-    const viewport = page.getViewport({ scale: 1.5 });
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-    return canvas.toDataURL('image/jpeg');
-  }
+    async function editRecord(id) {
+      const snap = await getDoc(doc(db, 'records', id));
+      const r = snap.data();
+      editRecordId = id;
+      currentRecordId = r.recordId;
+      currentCatId = r.catId;
+      switchTab('record', document.querySelectorAll('.tab-btn')[1]);
+      document.getElementById('visitDate').value = r.visitDate;
+      document.getElementById('nowWeight').value = r.weight;
+      document.getElementById('visitContent').value = r.content;
+      drugList = r.drugs || [];
+      showDrugList();
+      showRecordIdBar();
+    }
 
-  function renderPhotoGrid() {
-    const grid = document.getElementById('examPhotoGrid');
-    grid.innerHTML = "";
-    currentExamPhotos.forEach((src, idx) => {
-      const div = document.createElement('div');
-      div.className = 'photo-item';
-      div.innerHTML = `
-        <img src="${src}" onclick="openImgLightbox(${idx})">
-        <div class="sort-controls">
-          <button class="sort-btn" onclick="movePhoto(${idx}, -1)">◀</button>
-          <button class="sort-btn" onclick="removePhoto(${idx})">🗑️</button>
-          <button class="sort-btn" onclick="movePhoto(${idx}, 1)">▶</button>
-        </div>
-      `;
-      grid.appendChild(div);
-    });
-  }
+    // 體重追蹤
+    async function loadWeightChart() {
+      const kw = document.getElementById('searchWeightCat').value;
+      if(!kw) return;
+      const snap = await getDocs(collection(db, 'cats'));
+      const cats = snap.docs.map(d=>({id:d.id, ...d.data()})).filter(c => c.name.includes(kw));
+      document.getElementById('weightCatResult').innerHTML = cats.map(c => `<button class="btn" onclick="renderChart('${c.id}','${c.name}')">${c.name}</button>`).join('');
+    }
 
-  function movePhoto(idx, dir) {
-    const newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= currentExamPhotos.length) return;
-    [currentExamPhotos[idx], currentExamPhotos[newIdx]] = [currentExamPhotos[newIdx], currentExamPhotos[idx]];
-    renderPhotoGrid();
-  }
+    async function renderChart(id, name) {
+      const snap = await getDocs(query(collection(db, 'records'), where('catId', '==', id)));
+      const data = snap.docs.map(d=>d.data()).filter(r=>r.weight).sort((a,b)=>new Date(a.visitDate)-new Date(b.visitDate));
+      const ctx = document.getElementById('weightChartCanvas').getContext('2d');
+      if(weightChart) weightChart.destroy();
+      weightChart = new Chart(ctx, {
+        type:'line',
+        data: {
+          labels: data.map(r=>r.visitDate),
+          datasets: [{label:name+' 體重(kg)', data:data.map(r=>r.weight), borderColor:'#2c5aa0'}]
+        }
+      });
+    }
 
-  function removePhoto(idx) {
-    if(confirm("移除此照片？")) { currentExamPhotos.splice(idx, 1); renderPhotoGrid(); }
-  }
+    // 管理員登入
+    function adminLogin() {
+      if(document.getElementById('adminAcc').value === '2015starmos' && document.getElementById('adminPwd').value === 'ha821208') {
+        document.getElementById('adminTabBtn').style.display = 'inline-block';
+        alert("管理員模式已開啟");
+      }
+    }
 
-  // --- 燈箱控制 (手動切換) ---
-  function openImgLightbox(idx) {
-    currentModalIdx = idx;
-    document.getElementById('showBigImg').src = currentExamPhotos[idx];
-    document.getElementById('imgModal').style.display = 'flex';
-  }
-
-  function changeModalImg(dir) {
-    currentModalIdx = (currentModalIdx + dir + currentExamPhotos.length) % currentExamPhotos.length;
-    document.getElementById('showBigImg').src = currentExamPhotos[currentModalIdx];
-  }
-
-  function closeImgModal() { document.getElementById('imgModal').style.display = 'none'; }
-
-  // --- 資料庫操作 ---
-  async function saveCatData() {
-    const id = document.getElementById('editCatId').value;
-    const data = {
-      name: document.getElementById('catName').value,
-      chip: document.getElementById('chipId').value,
-      owner: document.getElementById('ownerName').value,
-      phone: document.getElementById('ownerPhone').value,
-      addr: document.getElementById('ownerAddr').value
+    window.onload = () => {
+      document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
     };
-    try {
-      if(id) await updateDoc(doc(db, 'cats', id), data);
-      else await addDoc(collection(db, 'cats'), data);
-      alert("儲存成功");
-      clearCatForm();
-    } catch(e) { alert(e.message); }
-  }
-
-  async function bindCat(id, name) {
-    currentCatId = id;
-    currentRecordId = "DC" + Date.now().toString().slice(-8);
-    document.getElementById('bindCatInfo').innerHTML = `<b style="color:green;">✅ 已綁定：${name}</b>`;
-  }
-
-  async function saveFullRecord() {
-    if(!currentCatId) return alert("請選擇動物");
-    const data = {
-      recordId: currentRecordId,
-      catId: currentCatId,
-      visitDate: document.getElementById('visitDate').value || new Date().toISOString().split('T')[0],
-      weight: document.getElementById('nowWeight').value,
-      content: document.getElementById('visitContent').value,
-      examPhotos: currentExamPhotos, // 儲存排序後的陣列
-      updateTime: new Date().toISOString()
-    };
-    try {
-      if(editRecordId) await updateDoc(doc(db, 'records', editRecordId), data);
-      else await addDoc(collection(db, 'records'), data);
-      alert("病歷已儲存");
-      location.reload();
-    } catch(e) { alert(e.message); }
-  }
-
-  async function searchHistoryRecord() {
-    const key = document.getElementById('filterKey').value.toLowerCase();
-    const catSnap = await getDocs(collection(db, 'cats'));
-    const matchedCatIds = catSnap.docs.map(d => ({id:d.id, ...d.data()}))
-      .filter(c => c.name.includes(key) || c.phone.includes(key) || (c.addr||"").includes(key))
-      .map(c => c.id);
-
-    const recSnap = await getDocs(collection(db, 'records'));
-    const filtered = recSnap.docs.map(d => ({id:d.id, ...d.data()}))
-      .filter(r => matchedCatIds.includes(r.catId))
-      .sort((a,b) => new Date(b.visitDate) - new Date(a.visitDate));
-
-    const tbody = document.getElementById('historyTableBody');
-    tbody.innerHTML = filtered.map(r => `
-      <tr>
-        <td>${r.visitDate}</td>
-        <td>${r.recordId}</td>
-        <td>${r.content.slice(0,20)}...</td>
-        <td><button class="btn btn-primary" onclick="editRecord('${r.id}')">✏️ 編輯</button></td>
-      </tr>
-    `).join('');
-  }
-
-  async function editRecord(id) {
-    const snap = await getDoc(doc(db, 'records', id));
-    const r = snap.data();
-    editRecordId = id;
-    currentRecordId = r.recordId;
-    currentCatId = r.catId;
-    currentExamPhotos = r.examPhotos || [];
-    
-    switchTab('record', document.querySelectorAll('.tab-btn')[1]);
-    document.getElementById('visitDate').value = r.visitDate;
-    document.getElementById('nowWeight').value = r.weight;
-    document.getElementById('visitContent').value = r.content;
-    renderPhotoGrid();
-  }
-
-  window.onload = () => { document.getElementById('visitDate').value = new Date().toISOString().split('T')[0]; };
-</script>
+  </script>
 </body>
 </html>
