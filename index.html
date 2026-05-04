@@ -1193,43 +1193,140 @@ async function searchHistoryRecord() {
   `).join('');
 }
 
-// 查看病歷明細
+// 查看病歷明細 → 專業獸醫病歷卡片（升級版）
 async function viewRecordDetail(id){
   const docRef = doc(db,'records',id);
   const snap = await getDoc(docRef);
   if(!snap.exists()) return alert('查無病歷');
   const data = snap.data();
-  
+
+  // 取得寵物資料
   const catRef = doc(db, 'cats', data.catId);
   const catSnap = await getDoc(catRef);
-  const catName = catSnap.exists() ? catSnap.data().name : '未知動物';
-  
-  let content = `
-動物：${catName}
-就診日期：${data.visitDate}
-回診日期：${data.reVisitDate || '無'}
-體重：${data.weight || '未填寫'}
-症狀：${data.content || '無'}
+  const cat = catSnap.exists() ? catSnap.data() : {};
 
-💊 驅蟲紀錄：
-驅蟲藥品：${data.dewormMedicine || '未填寫'}
-執行時間：${data.dewormTime || '未填寫'}
-下次提醒：${data.dewormRemindDate || '未設定'}
+  let card = `
+  <div style="position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; overflow-y:auto; padding:16px;" onclick="closeDetailCard()">
+    <div style="max-width:1000px; margin:20px auto; background:#fff; border-radius:14px; box-shadow:0 8px 30px rgba(0,0,0,0.3); position:relative; overflow:hidden;" onclick="event.stopPropagation()">
+      
+      <!-- 頂部標題列 -->
+      <div style="background:linear-gradient(135deg, #2c5aa0, #1a3d7a); color:#fff; padding:18px 24px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h2 style="margin:0; font-size:20px;">📋 獸醫電子病歷</h2>
+          <p style="margin:4px 0 0; opacity:0.9;">病歷編號：${data.recordId || '未產生'}</p>
+        </div>
+        <button onclick="closeDetailCard()" style="background:rgba(255,255,255,0.2); color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; font-size:14px;">✕ 關閉</button>
+      </div>
 
-用藥紀錄：
-`;
-  if(data.drugs && data.drugs.length>0){
-    data.drugs.forEach((d,i)=>{
-      content += `\n${i+1}. ${d.name} - ${d.dose} ${d.times||''}`;
+      <div style="padding:24px;">
+        <!-- 寵物 + 飼主 雙欄 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+          
+          <div style="background:#f8f9fd; border-radius:10px; padding:16px; border-left:4px solid #2c5aa0;">
+            <h3 style="margin:0 0 10px; font-size:16px; color:#2c5aa0;">🐾 動物資料</h3>
+            <p style="margin:4px 0;"><strong>寵物姓名：</strong>${cat.name || '-'}</p>
+            <p style="margin:4px 0;"><strong>晶片號碼：</strong>${cat.chip || '-'}</p>
+            <p style="margin:4px 0;"><strong>品種 / 生日：</strong>${cat.breed || '-'}　${cat.birth || '-'}</p>
+            <p style="margin:4px 0;"><strong>性別 / 結紮：</strong>${cat.gender || '-'}　${cat.neuter || '-'}</p>
+            <p style="margin:4px 0;"><strong>備註：</strong>${cat.note || '無'}</p>
+          </div>
+
+          <div style="background:#f8f9fd; border-radius:10px; padding:16px; border-left:4px solid #f3910a;">
+            <h3 style="margin:0 0 10px; font-size:16px; color:#f3910a;">👤 飼主資料</h3>
+            <p style="margin:4px 0;"><strong>飼主：</strong>${cat.owner || '-'}</p>
+            <p style="margin:4px 0;"><strong>手機：</strong>${cat.phone || '-'}</p>
+            <p style="margin:4px 0;"><strong>備用電話：</strong>${cat.phone2 || '-'}</p>
+            <p style="margin:4px 0;"><strong>身分證：</strong>${cat.ownerId || '-'}</p>
+            <p style="margin:4px 0;"><strong>地址：</strong>${cat.addr || '-'}</p>
+          </div>
+        </div>
+
+        <!-- 就診資訊 -->
+        <div style="background:#eef5ff; border-radius:10px; padding:18px; margin-bottom:16px; border-left:4px solid #3498db;">
+          <h3 style="margin:0 0 10px; font-size:16px; color:#2c5aa0;">🩺 本次就診</h3>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <p style="margin:4px 0;"><strong>就診日期：</strong>${data.visitDate || '-'}</p>
+            <p style="margin:4px 0;"><strong>回診日期：</strong>${data.reVisitDate || '無'}</p>
+            <p style="margin:4px 0;"><strong>手術日期：</strong>${data.surgeryDate || '無'}</p>
+            <p style="margin:4px 0;"><strong>體重：</strong>${data.weight || '-'} kg</p>
+          </div>
+          <p style="margin:10px 0 0; line-height:1.6;"><strong>症狀／診斷：</strong><br>${data.content || '無說明'}</p>
+        </div>
+
+        <!-- 驅蟲 -->
+        <div style="background:#f0fff4; border-radius:10px; padding:18px; margin-bottom:16px; border-left:4px solid #2ecc71;">
+          <h3 style="margin:0 0 10px; font-size:16px; color:#2ecc71;">💊 驅蟲紀錄</h3>
+          <p style="margin:4px 0;"><strong>藥品名稱：</strong>${data.dewormMedicine || '未填寫'}</p>
+          <p style="margin:4px 0;"><strong>執行時間：</strong>${data.dewormTime || '未填寫'}</p>
+          <p style="margin:4px 0;"><strong>下次提醒：</strong>${data.dewormRemindDate || '未設定'}</p>
+        </div>
+
+        <!-- 用藥 -->
+        <div style="background:#fff9e6; border-radius:10px; padding:18px; margin-bottom:16px; border-left:4px solid #f3910a;">
+          <h3 style="margin:0 0 10px; font-size:16px; color:#cc8400;">💊 用藥紀錄</h3>
+          <table style="width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden;">
+            <thead>
+              <tr style="background:#fff1d0;">
+                <th style="padding:10px; border:1px solid #eee;">藥名</th>
+                <th style="padding:10px; border:1px solid #eee;">劑量</th>
+                <th style="padding:10px; border:1px solid #eee;">次數</th>
+                <th style="padding:10px; border:1px solid #eee;">用藥期間</th>
+                <th style="padding:10px; border:1px solid #eee;">備註</th>
+              </tr>
+            </thead>
+            <tbody>
+  `;
+
+  if(data.drugs && data.drugs.length > 0){
+    data.drugs.forEach(d => {
+      card += `
+      <tr>
+        <td style="padding:10px; border:1px solid #eee;">${d.name}</td>
+        <td style="padding:10px; border:1px solid #eee;">${d.dose}</td>
+        <td style="padding:10px; border:1px solid #eee;">${d.times || '-'}</td>
+        <td style="padding:10px; border:1px solid #eee;">${d.start || '-'} ~ ${d.end || '-'}</td>
+        <td style="padding:10px; border:1px solid #eee;">${d.remark || '-'}</td>
+      </tr>`;
     });
   }else{
-    content += '\n無用藥紀錄';
+    card += `<tr><td colspan="5" style="padding:12px; text-align:center; border:1px solid #eee;">無用藥紀錄</td></tr>`;
   }
 
-  alert(content);
-  nowImgList = data.imgList || [];
+  card += `
+            </tbody>
+          </table>
+        </div>
+  `;
+
+  // 照片
+  const imgList = data.imgList || [];
+  if(imgList.length > 0){
+    card += `
+    <div style="background:#f6faff; border-radius:10px; padding:18px; border-left:4px solid #3498db;">
+      <h3 style="margin:0 0 12px; font-size:16px; color:#3498db;">📷 病歷照片</h3>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+    `;
+    imgList.forEach(src => {
+      card += `<img src="${src}" style="width:140px; height:140px; object-fit:cover; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.1);" onclick="openImgModal('${src}')">`;
+    });
+    card += `</div></div>`;
+  }
+
+  card += `
+      </div>
+    </div>
+  </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', card);
+  nowImgList = imgList;
   nowImgIndex = 0;
-  if(nowImgList.length > 0) openImgModal(nowImgList[0]);
+}
+
+// 關閉詳細病歷卡片
+function closeDetailCard(){
+  const card = document.querySelector('[style*="position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999;"]');
+  if(card) card.remove();
 }
 
 // 體重圖表
