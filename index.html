@@ -894,120 +894,62 @@ window.getDownloadURL = getDownloadURL;
       });
     }
 
-    async function saveFullRecord() {
-      if (!currentCatId) return alert('請先綁定就診動物');
-
-      const visitDate = document.getElementById('visitDate').value;
-      if (!visitDate) return alert('請選擇就診日期');
-
-      const data = {
-        catId: currentCatId,
-        visitDate: visitDate,
-        reVisitDate: document.getElementById('reVisitDate').value,
-        surgeryDate: document.getElementById('surgeryDate').value,
-        weight: document.getElementById('nowWeight').value,
-        content: document.getElementById('visitContent').value,
-        drugs: drugList,
-        createTime: new Date().toISOString(),
-        updateTime: new Date().toISOString()
-      };
-
-      try {
-        await addDoc(collection(db, 'records'), data);
-        alert('✅ 病歷資料儲存成功');
-        
-        drugList = [];
-        showDrugList();
-        document.getElementById('visitContent').value = '';
-        document.getElementById('nowWeight').value = '';
-        document.getElementById('examPhotoPreview').innerHTML = '';
-        document.getElementById('treatPhotoPreview').innerHTML = '';
-        examFiles = [];
-        treatFiles = [];
-        
-        document.querySelectorAll('.symptom-tag').forEach(tag => {
-          tag.classList.remove('active');
-        });
-      } catch (e) {
-        alert('❌ 病歷儲存失敗：' + e.message);
-      }
-    }
-
-async function searchHistoryRecord() {
-  const start = document.getElementById('filterStart').value;
-  const end = document.getElementById('filterEnd').value;
-  const key = document.getElementById('filterKey').value.trim().toLowerCase();
-
-  // 1. 取得所有病歷
-  const snap = await getDocs(collection(db, 'records'));
-  let recordsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-  // 2. 取得所有貓咪資料（用來關聯搜尋）
-  const catSnap = await getDocs(collection(db, 'cats'));
-  const catMap = {};
-  catSnap.docs.forEach(doc => {
-    const catData = doc.data();
-    catMap[doc.id] = {
-      name: (catData.name || ''),
-      owner: (catData.owner || '').toLowerCase(),
-      chip: (catData.chip || '').trim(),
-      ownerId: (catData.ownerId || '').toLowerCase(),
-      addr: (catData.addr || '').toLowerCase()
-    };
-  });
-
-  // 3. 日期過濾
-  if (start) {
-    recordsList = recordsList.filter(item => item.visitDate >= start);
-  }
-  if (end) {
-    recordsList = recordsList.filter(item => item.visitDate <= end);
-  }
-
-  // 4. 超強關鍵字搜尋（貓名、飼主、晶片全碼、晶片後5碼、身分證、地址）
-  if (key) {
-    recordsList = recordsList.filter(record => {
-      const cat = catMap[record.catId];
-      if (!cat) return false;
-
-      // 病歷症狀
-      const content = (record.content || '').toLowerCase();
-      // 晶片後5碼
-      const chipLast5 = cat.chip.length >= 5 ? cat.chip.slice(-5).toLowerCase() : '';
-
-      return (
-        content.includes(key) ||
-        cat.name.toLowerCase().includes(key) ||
-        cat.owner.includes(key) ||
-        cat.chip.toLowerCase().includes(key) ||
-        chipLast5 === key ||
-        cat.ownerId.includes(key) ||
-        cat.addr.includes(key)
-      );
-    });
-  }
-
-  // 5. 產生表格
-  const tbody = document.getElementById('historyTableBody');
-  if (recordsList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">無符合條件的病歷紀錄</td></tr>';
+async function saveFullRecord() {
+  // 防呆：空白病歷不能儲存
+  if (!currentCatId) {
+    alert('❌ 請先綁定就診動物！');
     return;
   }
 
-  tbody.innerHTML = recordsList.map(item => `
-  <tr>
-    <td>${item.visitDate}</td>
-    <td>${catMap[item.catId]?.name || '未知動物'}</td>
-    <td>${item.weight || '-'}</td>
-    <td>${(item.content || '無描述').substring(0, 50)}${(item.content && item.content.length > 50) ? '...' : ''}</td>
-    <td>${item.reVisitDate || '-'}</td>
-    <td>
-      <button class="btn btn-outline" onclick="viewRecordDetail('${item.id}')">📄 查看</button>
-      <button class="btn btn-primary" onclick="editRecord('${item.id}')">✏️ 編輯</button>
-      <button class="btn btn-danger" onclick="deleteRecord('${item.id}')">🗑️ 刪除</button>
-    </td>
-  </tr>
-`).join('');
+  const visitDate = document.getElementById('visitDate').value;
+  const content = document.getElementById('visitContent').value.trim();
+
+  if (!visitDate) {
+    alert('❌ 請選擇就診日期！');
+    return;
+  }
+
+  if (!content) {
+    alert('❌ 請填寫症狀/看診內容！');
+    return;
+  }
+
+  if (!confirm('確定要儲存這筆正式病歷嗎？')) return;
+
+  const data = {
+    catId: currentCatId,
+    visitDate: visitDate,
+    reVisitDate: document.getElementById('reVisitDate').value,
+    surgeryDate: document.getElementById('surgeryDate').value,
+    weight: document.getElementById('nowWeight').value,
+    content: content,
+    drugs: drugList,
+    createTime: new Date().toISOString(),
+    updateTime: new Date().toISOString()
+  };
+
+  try {
+    await addDoc(collection(db, 'records'), data);
+    alert('✅ 病歷儲存成功！');
+    
+    drugList = [];
+    showDrugList();
+    document.getElementById('visitContent').value = '';
+    document.getElementById('nowWeight').value = '';
+    document.getElementById('examPhotoPreview').innerHTML = '';
+    document.getElementById('treatPhotoPreview').innerHTML = '';
+    examFiles = [];
+    treatFiles = [];
+    
+    document.querySelectorAll('.symptom-tag').forEach(tag => {
+      tag.classList.remove('active');
+    });
+  } catch (e) {
+    alert('❌ 儲存失敗：' + e.message);
+  }
+}
+   
+
 }
 
 // 編輯病歷
