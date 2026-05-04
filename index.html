@@ -554,36 +554,29 @@
           </div>
         </div>
 
-        <div id="admin" class="page">
-          <div class="section">
-            <div class="section-header">
-              <span>管理員權限管控</span>
-            </div>
-            <div class="section-body">
-              <div class="form-grid" style="max-width:500px;">
-                <div class="form-group">
-                  <label>管理員帳號</label>
-                  <input type="text" id="adminAcc" placeholder="請輸入管理員帳號">
-                </div>
-                <div class="form-group">
-                  <label>管理員密碼</label>
-                  <input type="password" id="adminPwd" placeholder="請輸入管理員密碼">
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="adminLogin()">🔐 登入管理後台</button>
-              <div style="margin-top:20px;padding:15px;background:var(--gray-light);border-radius:4px;">
-                <h4 style="color:var(--primary);margin-bottom:10px;">管理員功能：</h4>
-                <ul style="padding-left:20px;line-height:1.8;">
-                  <li>個資隱藏/顯示切換</li>
-                  <li>系統操作日誌查詢</li>
-                  <li>批次匯入/匯出動物資料</li>
-                  <li>病歷資料備份還原</li>
-                  <li>使用者權限管理</li>
-                  <li>系統參數設定</li>
-                </ul>
-              </div>
-            </div>
-          </div>
+<div id="admin" class="page">
+  <div class="section">
+    <div class="section-header">
+      <span>管理員權限管控</span>
+    </div>
+    <div class="section-body">
+      <div class="form-grid" style="max-width:500px;">
+        <div class="form-group">
+          <label>管理員帳號</label>
+          <input type="text" id="adminAcc" placeholder="請輸入管理員帳號">
+        </div>
+        <div class="form-group">
+          <label>管理員密碼</label>
+          <input type="password" id="adminPwd" placeholder="請輸入管理員密碼">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="adminLogin()">🔐 登入管理後台</button>
+      
+      <!-- 管理面板容器 保留這行就好 -->
+      <div id="adminPanel" style="margin-top:20px;"></div>
+    </div>
+  </div>
+</div>
         </div>
       </div>
     </div>
