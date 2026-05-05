@@ -199,6 +199,8 @@
       <button class="tab-btn active" onclick="switchTab('cat',this)">🐱 動物基本資料</button>
       <button class="tab-btn" onclick="switchTab('record',this)">📝 建立病歷紀錄</button>
       <button class="tab-btn" onclick="switchTab('history',this)">🔍 病歷查詢</button>
+      <button class="tab-btn" onclick="switchTab('weight',this)">📊 體重追蹤</button>
+      <button class="tab-btn" onclick="switchTab('remind',this)">⚠️ 疫苗/回診提醒</button>
     </div>
 
     <div class="tab-content">
@@ -539,10 +541,12 @@
             </div>
           </div>
         </div>
+      </div>
 
+      <div id="weight" class="page">
         <div class="section">
           <div class="section-header">
-            <span>📊 動物體重變化曲線圖</span>
+            <span>動物體重變化曲線圖</span>
           </div>
           <div class="section-body">
             <div class="form-group">
@@ -553,29 +557,31 @@
             <canvas id="weightChartCanvas" style="margin-top:15px;"></canvas>
           </div>
         </div>
-
-        <div class="section">
-          <div class="section-header">
-            <span>⚠️ 疫苗/驅蟲/回診到期提醒 <span style="color:var(--danger);font-size:12px;">(紅色=即將到期)</span></span>
-          </div>
-          <div class="section-body">
-            <table class="data-table" id="remindListShow">
-              <thead>
-                <tr>
-                  <th>動物姓名</th>
-                  <th>提醒類型</th>
-                  <th>到期日期</th>
-                  <th>剩餘天數</th>
-                  <th>狀態</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody id="remindTableBody">
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
+
+<div id="remind" class="page">
+  <div class="section">
+    <div class="section-header">
+      <span>疫苗/驅蟲/回診到期提醒 <span style="color:var(--danger);font-size:12px;">(紅色=即將到期)</span></span>
+    </div>
+    <div class="section-body">
+      <table class="data-table" id="remindListShow">
+        <thead>
+          <tr>
+            <th>動物姓名</th>
+            <th>提醒類型</th>
+            <th>到期日期</th>
+            <th>剩餘天數</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="remindTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <div id="admin" class="page">
   <div class="section">
@@ -738,9 +744,6 @@ function switchTab(id, btn) {
     }
     loadDraftList();
   }
-  if(id === 'history'){
-    loadRemindList();
-  }
 }
 
 function addSymptom(el) {
@@ -871,18 +874,72 @@ function unbindCat(){
   document.getElementById('bindCatInfo').innerHTML = '尚未綁定動物，請先搜尋並選擇欲建立病歷的動物';
 }
 
+// 🔥 雲端 100% 萬用雙向搜尋（動物名/晶片/飼主/手機/地址/身分證）
 async function searchCatForRecord() {
   const kw = document.getElementById('searchRecordCat').value.toLowerCase().trim();
-  if(!kw){ unbindCat(); return; }
+  
+  // 空值就取消綁定
+  if(!kw){ 
+    unbindCat(); 
+    document.getElementById('bindCatInfo').innerHTML = "尚未綁定動物，請先搜尋並選擇欲建立病歷的動物";
+    return; 
+  }
+
+  // 🔥 直接從雲端 Firestore 讀取全部資料（沒有本地快取）
   const snap = await getDocs(collection(db, 'cats'));
   const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const res = list.filter(i => (i.name && i.name.toLowerCase().includes(kw)) || (i.chip && i.chip.includes(kw)));
+
+  // 🔥 萬用搜尋條件（支援所有欄位）
+  const res = list.filter(i => {
+    const name = (i.name || "").toLowerCase();
+    const chip = (i.chip || "").toLowerCase();
+    const owner = (i.owner || "").toLowerCase();
+    const phone = (i.phone || "").toLowerCase();
+    const phone2 = (i.phone2 || "").toLowerCase();
+    const ownerId = (i.ownerId || "").toLowerCase();
+    const addr = (i.addr || "").toLowerCase();
+
+    return name.includes(kw) 
+        || chip.includes(kw) 
+        || owner.includes(kw) 
+        || phone.includes(kw) 
+        || phone2.includes(kw) 
+        || ownerId.includes(kw) 
+        || addr.includes(kw);
+  });
+
+  // 組合結果
   let html = '';
   if (res.length > 0) {
-    html = '<table class="data-table"><thead><tr><th>姓名</th><th>晶片號</th><th>操作</th></tr></thead><tbody>';
-    html += res.map(i => `<tr><td>${i.name}</td><td>${i.chip}</td><td><button class="btn btn-primary" onclick="bindCat('${i.id}','${i.name}')">選擇</button></td></tr>`).join('');
+    html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>動物名</th>
+          <th>晶片</th>
+          <th>飼主</th>
+          <th>手機</th>
+          <th>選擇</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+    html += res.map(i => `
+      <tr>
+        <td>${i.name || '-'}</td>
+        <td>${i.chip || '-'}</td>
+        <td>${i.owner || '-'}</td>
+        <td>${i.phone || '-'}</td>
+        <td>
+          <button class="btn btn-primary" onclick="bindCat('${i.id}','${i.name}')">選擇</button>
+        </td>
+      </tr>
+    `).join('');
     html += '</tbody></table>';
-  } else { html = '未找到符合條件的動物'; }
+  } else {
+    html = `<div style="padding:10px; text-align:center;">🔍 沒有找到符合「${kw}」的動物</div>`;
+  }
+
   document.getElementById('bindCatInfo').innerHTML = html;
 }
 
