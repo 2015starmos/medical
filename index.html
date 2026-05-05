@@ -899,11 +899,13 @@ async function uploadFiles(files, path){
   for(const f of files){
     try {
       const fileName = `${path}/${Date.now()}_${f.name}`;
-      const fileRef = window.ref(window.storage, fileName);
-      await window.uploadBytes(fileRef, f);
-      const url = await window.getDownloadURL(fileRef);
+      const fileRef = ref(storage, fileName);
+      await uploadBytes(fileRef, f);
+      const url = await getDownloadURL(fileRef);
       urls.push(url);
-    } catch(e) { console.error("上傳失敗", e); }
+    } catch(e) {
+      console.error("上傳失敗", e);
+    }
   }
   return urls;
 }
@@ -938,6 +940,7 @@ async function saveFullRecord() {
   if (!visitDate || !content) return alert('❌ 請完整填寫就診日期與內容');
 
   try {
+    // 修復：確保檔案上傳完畢
     const examUrls = await uploadFiles(examFiles, `exam/${currentCatId}`);
     const treatUrls = await uploadFiles(treatFiles, `treat/${currentCatId}`);
 
@@ -972,7 +975,9 @@ async function saveFullRecord() {
     
     clearRecordForm();
     loadDraftList();
-  } catch (e) { alert('❌ 儲存失敗：' + e.message); }
+  } catch (e) {
+    alert('❌ 儲存失敗：' + e.message);
+  }
 }
 
 async function loadDraftList(){
