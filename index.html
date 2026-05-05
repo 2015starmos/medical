@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>獸醫電子病歷系統</title>
+  <title>獸醫病歷系統</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root{
@@ -184,8 +184,8 @@
 <body>
 <div class="header">
   <div class="logo">
-    <img src="https://via.placeholder.com/40/2c5aa0/ffffff?text=SV" alt="SMARTVET">
-    <h1>獸醫電子病歷系統</h1>
+    <img src="https://via.placeholder.com/40/2c5aa0/ffffff?text=V" alt="Logo">
+    <h1>獸醫病歷系統</h1>
   </div>
 </div>
 
@@ -625,12 +625,22 @@ function setupDragDrop(dropArea, fileInput, callback) {
   });
 }
 
+function wrapFile(file) {
+  return {
+    name: file.name,
+    type: file.type,
+    fileObj: file
+  };
+}
+
 function handleExamFiles(newFiles) {
-  examFiles = [...examFiles, ...newFiles];
+  const wrapped = newFiles.map(f => wrapFile(f));
+  examFiles = [...examFiles, ...wrapped];
   previewExamFiles();
 }
 function handleTreatFiles(newFiles) {
-  treatFiles = [...treatFiles, ...newFiles];
+  const wrapped = newFiles.map(f => wrapFile(f));
+  treatFiles = [...treatFiles, ...wrapped];
   previewTreatFiles();
 }
 
@@ -894,13 +904,14 @@ function showDrugList() {
 
 function deleteDrug(index) { drugList.splice(index, 1); showDrugList(); }
 
-async function uploadFiles(files, path){
+async function uploadWrappedFiles(wrappedFiles, path){
   const urls = [];
-  for(const f of files){
+  for(const item of wrappedFiles){
     try {
-      const fileName = `${path}/${Date.now()}_${f.name}`;
+      const file = item.fileObj;
+      const fileName = `${path}/${Date.now()}_${file.name}`;
       const fileRef = ref(storage, fileName);
-      await uploadBytes(fileRef, f);
+      await uploadBytes(fileRef, file);
       const url = await getDownloadURL(fileRef);
       urls.push(url);
     } catch(e) {
@@ -940,9 +951,8 @@ async function saveFullRecord() {
   if (!visitDate || !content) return alert('❌ 請完整填寫就診日期與內容');
 
   try {
-    // 修復：確保檔案上傳完畢
-    const examUrls = await uploadFiles(examFiles, `exam/${currentCatId}`);
-    const treatUrls = await uploadFiles(treatFiles, `treat/${currentCatId}`);
+    const examUrls = await uploadWrappedFiles(examFiles, `exam/${currentCatId}`);
+    const treatUrls = await uploadWrappedFiles(treatFiles, `treat/${currentCatId}`);
 
     const data = {
       recordId: currentRecordId,
@@ -1158,9 +1168,9 @@ async function viewRecordDetail(id) {
 
 function previewExamFiles() {
   const preview = document.getElementById('examPhotoPreview');
-  preview.innerHTML = examFiles.map((f, i) => `
+  preview.innerHTML = examFiles.map((item, i) => `
     <div class="photo-item">
-      <img src="${URL.createObjectURL(f)}" onclick="openImgModal(this.src)">
+      <img src="${URL.createObjectURL(item.fileObj)}" onclick="openImgModal(this.src)">
       <button onclick="deleteExamPhoto(${i})" style="position:absolute;top:0;right:0;background:red;color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;">✕</button>
     </div>
   `).join('');
@@ -1169,9 +1179,9 @@ function deleteExamPhoto(i) { examFiles.splice(i,1); previewExamFiles(); }
 
 function previewTreatFiles() {
   const preview = document.getElementById('treatPhotoPreview');
-  preview.innerHTML = treatFiles.map((f, i) => `
+  preview.innerHTML = treatFiles.map((item, i) => `
     <div class="photo-item">
-      <img src="${URL.createObjectURL(f)}" onclick="openImgModal(this.src)">
+      <img src="${URL.createObjectURL(item.fileObj)}" onclick="openImgModal(this.src)">
       <button onclick="deleteTreatPhoto(${i})" style="position:absolute;top:0;right:0;background:red;color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;">✕</button>
     </div>
   `).join('');
